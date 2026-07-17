@@ -53,7 +53,10 @@ body {
     @apply bg-ink-800/85 backdrop-blur-2xl border border-white/10;
   }
   .glass-drawer {
-    @apply bg-ink-900/85 backdrop-blur-2xl border border-white/10;
+    @apply bg-ink-900 backdrop-blur-2xl border border-white/10;
+    background-color: rgb(12 10 9 / 0.78);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 24px 60px -24px rgba(0,0,0,0.6),
+      inset 0 1px 0 0 rgba(255,255,255,0.04);
   }
   .card-surface {
     @apply rounded-3xl border border-white/5 bg-ink-800/50 backdrop-blur-sm;
@@ -68,7 +71,10 @@ body {
     @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border border-white/10 bg-white/5 text-ink-200;
   }
   .nav-item {
-    @apply inline-flex items-center rounded-full px-3.5 py-2 text-sm font-medium text-ink-300 transition-all duration-300 ease-smooth;
+    @apply inline-flex items-center gap-2.5 rounded-full px-3.5 py-2 text-sm font-medium text-ink-300 transition-all duration-300 ease-smooth;
+  }
+  .nav-item > svg {
+    @apply h-4 w-4 shrink-0;
   }
   .nav-item:hover {
     @apply text-ink-50 bg-white/[0.06] brightness-125;
@@ -173,7 +179,76 @@ body {
   .scroll-thin::-webkit-scrollbar-thumb:hover {
     background: rgba(168, 108, 66, 0.55);
   }
+  /* Respect reduced-motion globally for decorative animations. */
+  @media (prefers-reduced-motion: reduce) {
+    .vinyl-spin,
+    .wave-soft,
+    .animate-eq,
+    .animate-pulse-soft,
+    .animate-float,
+    .animate-float-slow,
+    .animate-gradient-pan,
+    .animate-shimmer {
+      animation: none !important;
+    }
+    .reveal {
+      transition: opacity 0.3s ease !important;
+      transform: none !important;
+      filter: none !important;
+    }
+    html {
+      scroll-behavior: auto;
+    }
+  }
   .bg-noise {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  }
+  /* Vinyl record — slow continuous spin. transform-only = GPU compositor. */
+  .vinyl-spin {
+    animation: vinyl-spin 18s linear infinite;
+    will-change: transform;
+  }
+  @keyframes vinyl-spin {
+    to { transform: rotate(360deg); }
+  }
+  .vinyl-paused {
+    animation-play-state: paused;
+  }
+  /* OneUI-style soft waveform — rounded caps, gentle sway. */
+  .wave-soft {
+    animation: wave-soft 2.4s ease-in-out infinite;
+    transform-origin: bottom;
+    will-change: transform;
+  }
+  @keyframes wave-soft {
+    0%, 100% { transform: scaleY(0.35); }
+    50% { transform: scaleY(1); }
+  }
+  .wave-soft-paused {
+    animation-play-state: paused;
+    transform: scaleY(0.28);
+  }
+  /* Gentle glow hint for "tomorrow" schedule tab. */
+  .tab-hint {
+    box-shadow: 0 0 0 1px rgba(192, 140, 102, 0.45),
+      0 0 18px -6px rgba(192, 140, 102, 0.5);
+  }
+  .snap-x-mandatory {
+    scroll-snap-type: x mandatory;
+  }
+  .snap-start {
+    scroll-snap-align: start;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .grab {
+    cursor: grab;
+  }
+  .grab:active {
+    cursor: grabbing;
   }
 }

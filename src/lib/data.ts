@@ -25,6 +25,7 @@ export interface Teacher {
   subject: string;
   photo: string;
   email: string;
+  whatsapp?: string; // international format, e.g. "6281234567890"; placeholder for now
 }
 
 export interface NavItem {
@@ -118,10 +119,10 @@ export const gallery: GalleryItem[] = [
 ];
 
 export const teachers: Teacher[] = [
-  { id: 't1', name: 'Ibu Ayu Pratiwi', subject: 'Fotografi & Wali Kelas', photo: 'https://images.pexels.com/photos/5905902/pexels-photo-5905902.jpeg?auto=compress&cs=tinysrgb&w=600', email: 'ayu.pratiwi@baliglobal.sch.id' },
-  { id: 't2', name: 'Bapak Made Wirawan', subject: 'Tipografi & Motion', photo: 'https://images.pexels.com/photos/8617715/pexels-photo-8617715.jpeg?auto=compress&cs=tinysrgb&w=600', email: 'made.wirawan@baliglobal.sch.id' },
-  { id: 't3', name: 'Bapak Putu Danu', subject: 'Ilustrasi & Branding', photo: 'https://images.pexels.com/photos/8550865/pexels-photo-8550865.jpeg?auto=compress&cs=tinysrgb&w=600', email: 'putu.danu@baliglobal.sch.id' },
-  { id: 't4', name: 'Bapak Ketut Adi', subject: 'Teori Warna', photo: 'https://images.pexels.com/photos/8550863/pexels-photo-8550863.jpeg?auto=compress&cs=tinysrgb&w=600', email: 'ketut.adi@baliglobal.sch.id' },
+  { id: 't1', name: 'Ibu Ayu Pratiwi', subject: 'Fotografi & Wali Kelas', photo: 'https://images.pexels.com/photos/5905902/pexels-photo-5905902.jpeg?auto=compress&cs=tinysrgb&w=600', email: 'ayu.pratiwi@baliglobal.sch.id', whatsapp: '6281234567890' },
+  { id: 't2', name: 'Bapak Made Wirawan', subject: 'Tipografi & Motion', photo: 'https://images.pexels.com/photos/8617715/pexels-photo-8617715.jpeg?auto=compress&cs=tinysrgb&w=600', email: 'made.wirawan@baliglobal.sch.id', whatsapp: '6281234567890' },
+  { id: 't3', name: 'Bapak Putu Danu', subject: 'Ilustrasi & Branding', photo: 'https://images.pexels.com/photos/8550865/pexels-photo-8550865.jpeg?auto=compress&cs=tinysrgb&w=600', email: 'putu.danu@baliglobal.sch.id', whatsapp: '6281234567890' },
+  { id: 't4', name: 'Bapak Ketut Adi', subject: 'Teori Warna', photo: 'https://images.pexels.com/photos/8550863/pexels-photo-8550863.jpeg?auto=compress&cs=tinysrgb&w=600', email: 'ketut.adi@baliglobal.sch.id', whatsapp: '6281234567890' },
 ];
 
 // ---------- Portal Data ----------
@@ -278,6 +279,17 @@ export function currentDayKey(): DayKey | null {
     0: null, 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: null,
   };
   return map[d] ?? null;
+}
+
+/** Next school day in the Mon–Fri cycle (wraps Fri -> Mon). */
+export function nextDayKey(day: DayKey): DayKey {
+  const idx = days.indexOf(day);
+  return days[(idx + 1) % days.length] as DayKey;
+}
+
+export function whatsappLink(number: string): string {
+  const clean = number.replace(/\D/g, '');
+  return `https://wa.me/${clean}`;
 }
 
 export function isNow(slot: ScheduleSlot): boolean {

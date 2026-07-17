@@ -1,20 +1,60 @@
-import { useState } from 'react';
-import { Music2, ExternalLink, Play, Clock, RefreshCw, Disc3 } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Music2, ExternalLink, Play, Pause, SkipBack, SkipForward, Clock, RefreshCw, ListMusic } from 'lucide-react';
 import { playlist, type PlaylistTrack } from '../../lib/data';
 import { useReveal } from '../../hooks/useReveal';
 
+const toSec = (d: string) => {
+  const [m, s] = d.split(':').map(Number);
+  return m * 60 + s;
+};
+const fmt = (sec: number) => {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+};
+
 export default function PlaylistKelas() {
   useReveal();
-  const [playing, setPlaying] = useState<string | null>(null);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0); // seconds
+
+  const track = playlist.tracks[currentIdx] as PlaylistTrack;
+  const total = toSec(track.duration);
+
+  // Lightweight progress clock — transform/width only, no reflow.
+  useEffect(() => {
+    if (!isPlaying) return;
+    const id = window.setInterval(() => {
+      setProgress((p) => {
+        if (p + 1 >= total) return total;
+        return p + 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [isPlaying, total]);
+
+  // When track changes, reset progress.
+  useEffect(() => setProgress(0), [currentIdx]);
+
+  const next = () => setCurrentIdx((i) => (i + 1) % playlist.tracks.length);
+  const prev = () => setCurrentIdx((i) => (i - 1 + playlist.tracks.length) % playlist.tracks.length);
+
+  // Auto-advance when a track finishes.
+  useEffect(() => {
+    if (progress >= total && isPlaying) {
+      next();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress, total, isPlaying]);
+
+  const pct = useMemo(() => Math.min(100, (progress / total) * 100), [progress, total]);
 
   const fmtDate = (iso: string) =>
-    new Date(iso + 'T00:00:00').toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
+    new Date(iso + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
-  const toggle = (id: string) => setPlaying((p) => (p === id ? null : id));
+  // OneUI-inspired soft waveform bars — 36 rounded capsules, GPU scaleY.
+  const bars = useMemo(() => Array.from({ length: 36 }, (_, i) => i), []);
 
   return (
     <section id="playlist" className="relative py-14 sm:py-20">
@@ -36,36 +76,49 @@ export default function PlaylistKelas() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
-          {/* Player + meta */}
+          {/* Premium media player */}
           <div className="reveal lg:col-span-7">
             <div className="card-surface relative overflow-hidden p-5 sm:p-6">
               <div className="pointer-events-none absolute -top-16 -right-12 h-48 w-48 rounded-full bg-brand-500/15 blur-3xl" />
 
-              <div className="relative flex flex-col sm:flex-row gap-5">
-                {/* Cover */}
-                <div className="relative shrink-0">
-                  <div className="h-44 w-44 overflow-hidden rounded-2xl ring-1 ring-inset ring-white/10 shadow-card">
-                    <img
-                      src={playlist.cover}
-                      alt={playlist.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover"
-                    />
+              <div className="relative flex flex-col sm:flex-row gap-6">
+                {/* Vinyl record — album art sits inside the disc */}
+                <div className="relative shrink-0 mx-auto sm:mx-0">
+                  <div
+                    className={`relative h-44 w-44 rounded-full bg-ink-950 ring-1 ring-inset ring-white/10 shadow-card overflow-hidden vinyl-spin ${
+                      isPlaying ? '' : 'vinyl-paused'
+                    }`}
+                    style={{
+                      backgroundImage:
+                        'repeating-radial-gradient(circle at center, rgba(255,255,255,0.05) 0 1px, transparent 1px 4px)',
+                    }}
+                  >
+                    {/* Album art center label */}
+                    <div className="absolute inset-[22%] overflow-hidden rounded-full ring-2 ring-ink-950/60">
+                      <img
+                        src={playlist.cover}
+                        alt={playlist.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    {/* Spindle hole */}
+                    <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink-950 ring-1 ring-white/20" />
                   </div>
-                  <span className="absolute -bottom-2 -right-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-cream-50 shadow-glow ring-2 ring-ink-800">
-                    <Disc3 className="h-4 w-4" />
-                  </span>
                 </div>
 
-                {/* Meta */}
+                {/* Now playing meta + transport */}
                 <div className="flex flex-1 flex-col">
-                  <span className="text-[10px] uppercase tracking-wider text-brand-300">Playlist</span>
-                  <h3 className="mt-1 font-display text-2xl font-bold text-ink-50">{playlist.title}</h3>
-                  <p className="mt-2 text-sm text-ink-300 leading-relaxed line-clamp-3">
-                    {playlist.description}
-                  </p>
+                  <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-brand-300">
+                    <ListMusic className="h-3.5 w-3.5" />
+                    {playlist.title}
+                  </div>
+                  <h3 className="mt-1.5 font-display text-2xl font-bold text-ink-50 leading-tight line-clamp-1">
+                    {track.title}
+                  </h3>
+                  <p className="text-sm text-ink-300">{track.artist}</p>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-ink-400">
+                  <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-ink-400">
                     <span className="inline-flex items-center gap-1.5">
                       <Music2 className="h-3.5 w-3.5" />
                       {playlist.totalSongs} lagu
@@ -77,30 +130,80 @@ export default function PlaylistKelas() {
                     </span>
                   </div>
 
-                  <a
-                    href={playlist.openUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 px-5 py-2.5 text-sm font-semibold text-cream-50 shadow-glow hover:-translate-y-0.5 transition-all duration-300 ease-smooth"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Buka di Spotify
-                  </a>
+                  {/* Transport controls */}
+                  <div className="mt-5 flex items-center gap-3">
+                    <button
+                      onClick={prev}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 text-ink-100 hover:bg-white/10 hover:text-ink-50 transition"
+                      aria-label="Sebelumnya"
+                    >
+                      <SkipBack className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setIsPlaying((p) => !p)}
+                      className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-cream-50 shadow-glow hover:-translate-y-0.5 transition-all duration-300 ease-smooth"
+                      aria-label={isPlaying ? 'Jeda' : 'Putar'}
+                    >
+                      {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 translate-x-0.5" />}
+                    </button>
+                    <button
+                      onClick={next}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 text-ink-100 hover:bg-white/10 hover:text-ink-50 transition"
+                      aria-label="Berikutnya"
+                    >
+                      <SkipForward className="h-4 w-4" />
+                    </button>
+
+                    <a
+                      href={playlist.openUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="ml-auto inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-2 text-xs font-semibold text-ink-100 hover:bg-white/10 hover:border-brand-400/30 transition-all duration-300 ease-smooth"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      Spotify
+                    </a>
+                  </div>
                 </div>
               </div>
 
-              {/* Embed */}
-              <div className="relative mt-5 overflow-hidden rounded-2xl ring-1 ring-inset ring-white/10 bg-ink-950/40">
-                <iframe
-                  src={playlist.embedUrl}
-                  title={playlist.title}
-                  width="100%"
-                  height="152"
-                  loading="lazy"
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  className="block w-full"
-                  style={{ border: 0 }}
-                />
+              {/* OneUI-inspired soft waveform timeline */}
+              <div className="relative mt-6">
+                <div className="flex items-end justify-between gap-[3px] h-12 px-1">
+                  {bars.map((i) => {
+                    const active = (i / bars.length) * 100 <= pct;
+                    const baseHeight = 30 + Math.abs(Math.sin(i * 0.9)) * 70;
+                    return (
+                      <span
+                        key={i}
+                        className={`wave-soft flex-1 max-w-[6px] rounded-full ${
+                          isPlaying ? '' : 'wave-soft-paused'
+                        } ${active ? 'bg-brand-300' : 'bg-white/10'}`}
+                        style={{
+                          height: `${baseHeight}%`,
+                          animationDelay: `${(i % 12) * 90}ms`,
+                          animationDuration: `${1.8 + (i % 5) * 0.3}s`,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Progress track */}
+                <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/5">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+
+                <div className="mt-2 flex items-center justify-between text-[11px] tabular-nums text-ink-400">
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="h-3 w-3 opacity-60" />
+                    {fmt(progress)}
+                  </span>
+                  <span>{track.duration}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -115,17 +218,28 @@ export default function PlaylistKelas() {
                 </span>
               </div>
 
-              <ul className="scroll-thin max-h-[22rem] overflow-y-auto divide-y divide-white/5">
-                {playlist.tracks.map((t: PlaylistTrack) => {
-                  const isPlaying = playing === t.id;
+              <ul className="scroll-thin max-h-[24rem] overflow-y-auto divide-y divide-white/5">
+                {playlist.tracks.map((t: PlaylistTrack, i: number) => {
+                  const isCurrent = i === currentIdx;
                   return (
                     <li key={t.id}>
                       <button
-                        onClick={() => toggle(t.id)}
-                        className="group flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors duration-300 hover:bg-white/5 active:bg-white/10"
+                        onClick={() => {
+                          setCurrentIdx(i);
+                          setIsPlaying(true);
+                        }}
+                        className={`group flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors duration-300 hover:bg-white/5 active:bg-white/10 ${
+                          isCurrent ? 'bg-white/[0.03]' : ''
+                        }`}
                       >
-                        <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5 ring-1 ring-inset ring-white/10 text-ink-200 transition-colors group-hover:bg-brand-500/20 group-hover:text-brand-200">
-                          {isPlaying ? (
+                        <span
+                          className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset transition-colors ${
+                            isCurrent
+                              ? 'bg-brand-500/20 text-brand-200 ring-brand-400/40'
+                              : 'bg-white/5 text-ink-200 ring-white/10 group-hover:bg-brand-500/20 group-hover:text-brand-200'
+                          }`}
+                        >
+                          {isCurrent && isPlaying ? (
                             <span className="flex items-end gap-0.5">
                               <span className="h-2.5 w-0.5 rounded-full bg-brand-300 animate-eq" style={{ animationDelay: '0ms' }} />
                               <span className="h-3.5 w-0.5 rounded-full bg-brand-300 animate-eq" style={{ animationDelay: '150ms' }} />
@@ -137,16 +251,13 @@ export default function PlaylistKelas() {
                         </span>
 
                         <div className="min-w-0 flex-1">
-                          <div className={`truncate text-sm font-medium ${isPlaying ? 'text-brand-200' : 'text-ink-100'}`}>
+                          <div className={`truncate text-sm font-medium ${isCurrent ? 'text-brand-200' : 'text-ink-100'}`}>
                             {t.title}
                           </div>
                           <div className="truncate text-xs text-ink-400">{t.artist}</div>
                         </div>
 
-                        <span className="shrink-0 text-xs tabular-nums text-ink-400 inline-flex items-center gap-1">
-                          <Clock className="h-3 w-3 opacity-60" />
-                          {t.duration}
-                        </span>
+                        <span className="shrink-0 text-xs tabular-nums text-ink-400">{t.duration}</span>
                       </button>
                     </li>
                   );

@@ -102,9 +102,9 @@ export default function PortalHeader({
                         setOpen(false);
                         scrollTo(`#${v.key}`);
                       }}
-                      className="w-full inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-left text-sm font-medium text-ink-100 hover:bg-white/10 transition"
+                      className="w-full inline-flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium text-ink-100 hover:bg-white/10 transition"
                     >
-                      <Icon className="h-4 w-4" />
+                      <Icon className="h-4 w-4 shrink-0 text-brand-300" />
                       {v.label}
                     </button>
                   </li>
