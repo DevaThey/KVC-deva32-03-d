@@ -34,6 +34,8 @@ export default function Gallery() {
   const spanClass = (s: GalleryItem['span']) =>
     s === 'tall' ? 'row-span-2' : s === 'wide' ? 'sm:col-span-2' : '';
 
+  const isSemua = filter === 'Semua';
+
   return (
     <section id="gallery" className="relative py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -69,34 +71,65 @@ export default function Gallery() {
           })}
         </div>
 
-        {/* Masonry grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[200px] sm:auto-rows-[240px] gap-3">
-          {list.map((item, i) => (
-            <button
-              key={item.id}
-              onClick={() => setActive(i)}
-              data-reveal-delay={(i % 4) * 60}
-              className={`reveal group relative overflow-hidden rounded-3xl border border-white/5 bg-ink-800/60 ${spanClass(item.span)}`}
-            >
-              <img
-                src={item.src}
-                alt={item.title}
-                loading="lazy"
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 via-ink-950/10 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-100" />
+        {/* "Semua" — curated artistic masonry; tight auto-rows fill gaps naturally */}
+        {isSemua ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[170px] sm:auto-rows-[200px] gap-3">
+            {list.map((item, i) => (
+              <button
+                key={item.id}
+                onClick={() => setActive(i)}
+                data-reveal-delay={(i % 4) * 60}
+                className={`reveal group relative overflow-hidden rounded-3xl border border-white/5 bg-ink-800/60 ${spanClass(item.span)}`}
+              >
+                <img
+                  src={item.src}
+                  alt={item.title}
+                  loading="lazy"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 via-ink-950/10 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-100" />
 
-              <div className="absolute inset-0 flex flex-col justify-end p-4 text-left">
-                <span className="text-[10px] uppercase tracking-wider text-brand-200">{item.category}</span>
-                <h3 className="mt-1 text-sm font-semibold text-ink-50 line-clamp-2">{item.title}</h3>
-              </div>
+                <div className="absolute inset-0 flex flex-col justify-end p-4 text-left">
+                  <span className="text-[10px] uppercase tracking-wider text-brand-200">{item.category}</span>
+                  <h3 className="mt-1 text-sm font-semibold text-ink-50 line-clamp-2">{item.title}</h3>
+                </div>
 
-              <span className="absolute top-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-md text-ink-50 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 scale-90">
-                <ZoomIn className="h-4 w-4" />
-              </span>
-            </button>
-          ))}
-        </div>
+                <span className="absolute top-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-md text-ink-50 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 scale-90">
+                  <ZoomIn className="h-4 w-4" />
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          /* Individual category — complete archive, uniform grid, equal cards */
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {list.map((item, i) => (
+              <button
+                key={item.id}
+                onClick={() => setActive(i)}
+                data-reveal-delay={(i % 4) * 50}
+                className="reveal group relative overflow-hidden rounded-3xl border border-white/5 bg-ink-800/60 aspect-[4/3]"
+              >
+                <img
+                  src={item.src}
+                  alt={item.title}
+                  loading="lazy"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink-950/85 via-ink-950/15 to-transparent opacity-85 transition-opacity duration-500 group-hover:opacity-100" />
+
+                <div className="absolute inset-0 flex flex-col justify-end p-4 text-left">
+                  <span className="text-[10px] uppercase tracking-wider text-brand-200">{item.category}</span>
+                  <h3 className="mt-1 text-sm font-semibold text-ink-50 line-clamp-2">{item.title}</h3>
+                </div>
+
+                <span className="absolute top-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-md text-ink-50 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 scale-90">
+                  <ZoomIn className="h-4 w-4" />
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {list.length === 0 && (
           <div className="reveal card-surface p-10 text-center text-ink-300">

@@ -87,6 +87,10 @@ export default {
           '0%, 100%': { opacity: '0.6' },
           '50%': { opacity: '1' },
         },
+        'eq': {
+          '0%, 100%': { transform: 'scaleY(0.4)' },
+          '50%': { transform: 'scaleY(1)' },
+        },
       },
       animation: {
         'fade-up': 'fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both',
@@ -97,6 +101,7 @@ export default {
         shimmer: 'shimmer 2.5s linear infinite',
         'spin-slow': 'spin-slow 24s linear infinite',
         'pulse-soft': 'pulse-soft 3s ease-in-out infinite',
+        'eq': 'eq 1s ease-in-out infinite',
       },
       transitionTimingFunction: {
         smooth: 'cubic-bezier(0.22, 1, 0.36, 1)',

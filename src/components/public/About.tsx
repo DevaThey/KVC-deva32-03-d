@@ -32,16 +32,18 @@ export default function About() {
           {/* Left: copy + pillars */}
           <div className="reveal flex flex-col justify-between">
             <div>
-              <span className="section-eyebrow">
-                <span className="h-px w-6 bg-brand-400/60" />
-                Tentang
-              </span>
-              <h2 className="section-title mt-3">Bukan kelas biasa.</h2>
-              <p className="section-sub mt-3">
-                Kami adalah kelas vokasi Design Communication Visual yang
-                percaya pada kerja tangan, kritik yang jujur, dan karya yang
-                sederhana namun dipikirkan dengan matang.
-              </p>
+              <div className="flex flex-col items-start gap-3">
+                <span className="section-eyebrow">
+                  <span className="h-px w-6 bg-brand-400/60" />
+                  Tentang
+                </span>
+                <h2 className="section-title">Bukan kelas biasa.</h2>
+                <p className="section-sub">
+                  Kami adalah kelas vokasi Design Communication Visual yang
+                  percaya pada kerja tangan, kritik yang jujur, dan karya yang
+                  sederhana namun dipikirkan dengan matang.
+                </p>
+              </div>
 
               <div className="mt-5 flex flex-wrap gap-3">
                 <span className="chip border-brand-400/30 bg-brand-500/10 text-brand-200">

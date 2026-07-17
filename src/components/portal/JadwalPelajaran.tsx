@@ -7,6 +7,7 @@ import {
   dayFull,
   dayShort,
   currentDayKey,
+  nextDayKey,
   isNow,
   type DayKey,
 } from '../../lib/data';
@@ -52,7 +53,9 @@ export default function JadwalPelajaran() {
   }, [dayBounds, nowMin]);
 
   const dayEnded = isToday && dayBounds ? nowMin > dayBounds.end : false;
-  const currentSlots = slots.filter(isNow);
+
+  // Next school day — shown as a gentle nav hint once today is over.
+  const nextDay = today ? nextDayKey(today) : null;
 
   return (
     <section id="schedule" className="relative pt-12 pb-16">
@@ -83,7 +86,9 @@ export default function JadwalPelajaran() {
             <div className="pointer-events-none absolute -top-16 -right-12 h-48 w-48 rounded-full bg-brand-500/15 blur-3xl" />
             <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <span className="text-[10px] uppercase tracking-wider text-brand-300">Sedang Berlangsung</span>
+                <span className="text-[10px] uppercase tracking-wider text-brand-300">
+                  {dayEnded ? 'Hari Telah Selesai' : 'Sedang Berlangsung'}
+                </span>
                 {slots.filter(isNow).length > 0 ? (
                   slots.filter(isNow).map((slot) => {
                     const c = subjectColorMap[slot.color];
@@ -149,6 +154,7 @@ export default function JadwalPelajaran() {
           {days.map((d) => {
             const isActive = active === d;
             const isTodayBtn = today === d;
+            const isNextHint = dayEnded && nextDay === d && !isActive;
             return (
               <button
                 key={d}
@@ -156,7 +162,9 @@ export default function JadwalPelajaran() {
                 className={`relative rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ease-smooth ${
                   isActive
                     ? 'bg-gradient-to-br from-brand-500 to-brand-700 text-cream-50 shadow-glow'
-                    : 'bg-white/5 border border-white/10 text-ink-200 hover:bg-white/10'
+                    : isNextHint
+                      ? 'bg-white/5 border border-brand-400/40 text-ink-100 tab-hint'
+                      : 'bg-white/5 border border-white/10 text-ink-200 hover:bg-white/10'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -164,6 +172,9 @@ export default function JadwalPelajaran() {
                   <span className="sm:hidden">{dayShort[d]}</span>
                   {isTodayBtn && (
                     <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-cream-100' : 'bg-brand-400'} animate-pulse-soft`} />
+                  )}
+                  {isNextHint && (
+                    <span className="hidden sm:inline text-[10px] uppercase tracking-wider text-brand-300/80">besok</span>
                   )}
                 </span>
               </button>
