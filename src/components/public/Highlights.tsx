@@ -1,17 +1,18 @@
+import { memo } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { useQuery } from '../../hooks/useQuery';
 import { fetchHighlights } from '../../lib/queries';
 import { useReveal } from '../../hooks/useReveal';
 import { LoadingState, ErrorState } from '../QueryState';
 
-export default function Highlights() {
+function Highlights() {
   useReveal();
   const { data, loading, error, refetch } = useQuery(fetchHighlights);
 
   const items = data ?? [];
 
   return (
-    <section id="highlights" className="relative py-14 sm:py-20">
+    <section id="highlights" className="reveal cv-auto relative py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="reveal flex flex-col items-start gap-3 mb-10">
           <span className="section-eyebrow">
@@ -46,7 +47,8 @@ export default function Highlights() {
                     src={h.image}
                     alt={h.title}
                     loading="lazy"
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
+                    decoding="async"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105 will-change-transform"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 via-ink-950/20 to-transparent" />
                   {h.subtitle && (
@@ -76,3 +78,4 @@ export default function Highlights() {
     </section>
   );
 }
+export default memo(Highlights);

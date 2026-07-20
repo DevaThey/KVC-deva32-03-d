@@ -97,16 +97,13 @@ body {
   .reveal {
     opacity: 0;
     transform: translateY(20px);
-    filter: blur(6px);
-    transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
-      transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
-      filter 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-    will-change: opacity, transform, filter;
+    transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
   }
   .reveal.is-visible {
     opacity: 1;
     transform: translateY(0);
-    filter: blur(0);
   }
   /* Screen-level transition for switching experiences.
      Only animate opacity — transform/filter in the final state would create a
@@ -237,8 +234,24 @@ body {
     .reveal {
       transition: opacity 0.3s ease !important;
       transform: none !important;
-      filter: none !important;
     }
     html { scroll-behavior: auto; }
+  }
+  /* Skip blur-heavy backdrop on mid-range devices — solid translucent bg is cheaper */
+  @media (max-width: 768px) {
+    .glass,
+    .glass-strong,
+    .glass-drawer {
+      backdrop-filter: none !important;
+    }
+    .glass { background-color: rgb(12 10 9 / 0.88); }
+    .glass-strong { background-color: rgb(12 10 9 / 0.94); }
+    .glass-drawer { background-color: rgb(12 10 9 / 0.92); }
+    .card-surface { backdrop-filter: none !important; }
+  }
+  /* Let the browser skip rendering work for off-screen sections */
+  .cv-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 600px;
   }
 }

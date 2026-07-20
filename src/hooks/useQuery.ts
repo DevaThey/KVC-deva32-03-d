@@ -9,7 +9,13 @@ interface QueryResult<T> {
 
 export function useQuery<T>(fetcher: () => Promise<T>, deps: unknown[] = []): QueryResult<T> {
   const fetcherRef = useRef(fetcher);
-  fetcherRef.current = fetcher;
+  const firstRun = useRef(true);
+  // Only update the ref on first render to avoid re-creating the fetcher
+  // on every parent re-render, which would cause duplicate API requests.
+  if (firstRun.current) {
+    fetcherRef.current = fetcher;
+    firstRun.current = false;
+  }
 
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);

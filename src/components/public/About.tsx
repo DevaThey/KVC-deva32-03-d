@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { MapPin, Palette, Layers, Sparkles } from 'lucide-react';
 import { useReveal } from '../../hooks/useReveal';
 import { useQuery } from '../../hooks/useQuery';
@@ -21,7 +22,7 @@ const pillars = [
   },
 ];
 
-export default function About() {
+function About() {
   useReveal();
   const { data: info } = useQuery(fetchClassInformation);
 
@@ -35,7 +36,7 @@ export default function About() {
   const aboutText = info?.aboutText ?? 'Kami adalah kelas vokasi Design Communication Visual yang percaya pada kerja tangan, kritik yang jujur, dan karya yang sederhana namun dipikirkan dengan matang.';
 
   return (
-    <section id="about" className="relative py-14 sm:py-20">
+    <section id="about" className="reveal cv-auto relative py-14 sm:py-20">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute left-1/3 top-10 h-72 w-72 rounded-full bg-brand-500/10 blur-3xl" />
       </div>
@@ -133,3 +134,4 @@ export default function About() {
     </section>
   );
 }
+export default memo(About);

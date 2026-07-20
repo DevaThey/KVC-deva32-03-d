@@ -62,6 +62,7 @@ export interface ScheduleSlot {
   subject: string;
   teacher: string;
   room: string;
+  lessonDuration: string;
   start: string;
   end: string;
   accentColor: SubjectColor;

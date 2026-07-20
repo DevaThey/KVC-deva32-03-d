@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { memo, useState, useEffect, useMemo } from 'react';
 import { Music2, ExternalLink, Play, Pause, SkipBack, SkipForward, Clock, ListMusic } from 'lucide-react';
 import { useQuery } from '../../hooks/useQuery';
 import { fetchPlaylist, fetchWebsiteSettings } from '../../lib/queries';
@@ -16,7 +16,7 @@ const fmt = (sec: number) => {
   return `${m}:${s.toString().padStart(2, '0')}`;
 };
 
-export default function PlaylistKelas() {
+function PlaylistKelas() {
   useReveal();
   const { data: tracks, loading, error, refetch } = useQuery(fetchPlaylist);
   const { data: settings } = useQuery(fetchWebsiteSettings);
@@ -55,7 +55,7 @@ export default function PlaylistKelas() {
   const spotifyEmbedUrl = settings?.spotifyPlaylist ?? '';
 
   return (
-    <section id="playlist" className="relative py-14 sm:py-20">
+    <section id="playlist" className="reveal cv-auto relative py-14 sm:py-20">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute left-1/4 top-10 h-72 w-72 rounded-full bg-brand-500/10 blur-3xl" />
       </div>
@@ -105,6 +105,7 @@ export default function PlaylistKelas() {
                           src={track?.coverImage || list[0]?.coverImage}
                           alt={track?.title || 'Playlist'}
                           loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover"
                         />
                       </div>
@@ -266,3 +267,4 @@ export default function PlaylistKelas() {
     </section>
   );
 }
+export default memo(PlaylistKelas);

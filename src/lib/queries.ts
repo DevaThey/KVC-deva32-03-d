@@ -86,7 +86,7 @@ export async function fetchPlaylist(): Promise<PlaylistTrack[]> {
 export async function fetchSchedule(): Promise<ScheduleSlot[]> {
   const { data, error } = await supabase
     .from('schedule')
-    .select('id, day, lesson_order, subject, teacher, room, start_time, end_time, accent_color, active')
+    .select('id, day, lesson_order, subject, teacher, room, lesson_duration, start_time, end_time, accent_color, active')
     .order('lesson_order', { ascending: true });
   if (error) throw error;
   return (data ?? []).map((r) => ({
@@ -96,6 +96,7 @@ export async function fetchSchedule(): Promise<ScheduleSlot[]> {
     subject: r.subject,
     teacher: r.teacher,
     room: r.room,
+    lessonDuration: r.lesson_duration ?? '1 JP',
     start: fmtTime(r.start_time),
     end: fmtTime(r.end_time),
     accentColor: r.accent_color as SubjectColor,

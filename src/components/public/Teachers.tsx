@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { MessageCircle, ArrowUpRight } from 'lucide-react';
 import { useQuery } from '../../hooks/useQuery';
 import { fetchTeachers } from '../../lib/queries';
 import { useReveal } from '../../hooks/useReveal';
 import { LoadingState, ErrorState } from '../QueryState';
 
-export default function Teachers() {
+function Teachers() {
   useReveal();
   const { data, loading, error, refetch } = useQuery(fetchTeachers);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -51,7 +51,7 @@ export default function Teachers() {
   const teachers = data ?? [];
 
   return (
-    <section id="teachers" className="relative py-14 sm:py-20">
+    <section id="teachers" className="reveal cv-auto relative py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="reveal flex flex-col items-start gap-3 mb-10">
           <span className="section-eyebrow">
@@ -102,8 +102,10 @@ export default function Teachers() {
                     src={t.photo}
                     alt={t.name}
                     loading="lazy"
+                    decoding="async"
                     draggable={false}
-                    className="h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
+                    sizes="256px"
+                    className="h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105 will-change-transform"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-ink-950/70 to-transparent" />
                 </div>
@@ -139,3 +141,4 @@ export default function Teachers() {
     </section>
   );
 }
+export default memo(Teachers);

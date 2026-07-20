@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import { useQuery } from '../../hooks/useQuery';
@@ -6,7 +7,7 @@ import { galleryCategories } from '../../lib/data';
 import { useReveal } from '../../hooks/useReveal';
 import { LoadingState, ErrorState } from '../QueryState';
 
-export default function Gallery() {
+function Gallery() {
   const [active, setActive] = useState<number | null>(null);
   const [filter, setFilter] = useState<string>('Semua');
   useReveal();
@@ -33,7 +34,7 @@ export default function Gallery() {
   const isSemua = filter === 'Semua';
 
   return (
-    <section id="gallery" className="relative py-14 sm:py-20">
+    <section id="gallery" className="reveal cv-auto relative py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="reveal flex flex-col items-start gap-3 mb-10">
           <span className="section-eyebrow">
@@ -96,7 +97,9 @@ export default function Gallery() {
                       src={item.image}
                       alt={item.title}
                       loading="lazy"
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
+                      decoding="async"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105 will-change-transform"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 via-ink-950/10 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-100" />
 
@@ -124,7 +127,9 @@ export default function Gallery() {
                       src={item.image}
                       alt={item.title}
                       loading="lazy"
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
+                      decoding="async"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105 will-change-transform"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-ink-950/85 via-ink-950/15 to-transparent opacity-85 transition-opacity duration-500 group-hover:opacity-100" />
 
@@ -182,6 +187,8 @@ export default function Gallery() {
             <img
               src={list[active].image}
               alt={list[active].title}
+              loading="eager"
+              decoding="async"
               className="w-full max-h-[78vh] object-contain rounded-3xl shadow-card"
             />
             <figcaption className="mt-4 flex items-center justify-between text-sm text-ink-200">
@@ -210,3 +217,4 @@ export default function Gallery() {
     </section>
   );
 }
+export default memo(Gallery);

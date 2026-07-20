@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect } from 'react';
-import { Clock, MapPin, User, CircleDot, CalendarDays } from 'lucide-react';
+import { useMemo, useState, useEffect, memo } from 'react';
+import { Clock, BookOpen, User, CircleDot, CalendarDays } from 'lucide-react';
 import { useQuery } from '../../hooks/useQuery';
 import { fetchSchedule } from '../../lib/queries';
 import {
@@ -11,6 +11,7 @@ import {
   nextDayKey,
   isNow,
   type DayKey,
+  type ScheduleSlot,
 } from '../../lib/data';
 import { useReveal } from '../../hooks/useReveal';
 import { LoadingState, ErrorState } from '../QueryState';
@@ -20,7 +21,60 @@ const toMin = (t: string) => {
   return h * 60 + m;
 };
 
-export default function JadwalPelajaran() {
+const ScheduleCard = memo(function ScheduleCard({
+  slot,
+  slotNow,
+  index,
+}: {
+  slot: ScheduleSlot;
+  slotNow: boolean;
+  index: number;
+}) {
+  const c = subjectColorMap[slot.accentColor];
+  return (
+    <div
+      data-reveal-delay={index * 50}
+      className={`reveal group relative overflow-hidden rounded-3xl border p-4 transition-transform duration-500 ease-smooth hover:-translate-y-1 ${
+        slotNow
+          ? `border-brand-400/40 ${c.bg} ring-2 ${c.ring} shadow-glow`
+          : 'border-white/5 bg-ink-800/50 hover:border-white/10'
+      }`}
+    >
+      {slotNow && (
+        <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-brand-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-200 ring-1 ring-inset ring-brand-400/40">
+          <CircleDot className="h-3 w-3 animate-pulse-soft" />
+          Now
+        </span>
+      )}
+
+      <div className="flex items-center gap-2">
+        <span className={`h-2.5 w-2.5 rounded-full ${c.dot}`} />
+        <span className={`text-[11px] uppercase tracking-wider ${c.text}`}>
+          {slot.start}–{slot.end}
+        </span>
+      </div>
+
+      <h3 className="mt-2 font-display text-lg font-semibold text-ink-50">{slot.subject}</h3>
+
+      <div className="mt-3 space-y-1 text-xs text-ink-300">
+        <div className="flex items-center gap-2">
+          <User className="h-3.5 w-3.5 text-ink-400" />
+          {slot.teacher}
+        </div>
+        <div className="flex items-center gap-2">
+          <BookOpen className="h-3.5 w-3.5 text-ink-400" />
+          {slot.lessonDuration}
+        </div>
+        <div className="flex items-center gap-2">
+          <Clock className="h-3.5 w-3.5 text-ink-400" />
+          {slot.start} – {slot.end}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+function JadwalPelajaran() {
   const today = currentDayKey();
   const [active, setActive] = useState<DayKey>(today ?? 'Monday');
   const [now, setNow] = useState(() => new Date());
@@ -114,8 +168,8 @@ export default function JadwalPelajaran() {
                                 {slot.teacher}
                               </span>
                               <span className="inline-flex items-center gap-1.5">
-                                <MapPin className="h-3.5 w-3.5" />
-                                Ruang {slot.room}
+                                <BookOpen className="h-3.5 w-3.5" />
+                                {slot.lessonDuration}
                               </span>
                             </div>
                           </div>
@@ -149,8 +203,8 @@ export default function JadwalPelajaran() {
                     </div>
                     <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/5 ring-1 ring-inset ring-white/10">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-300 transition-[width] duration-700 ease-smooth"
-                        style={{ width: `${dayProgress}%` }}
+                        className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-300 will-change-width"
+                        style={{ width: `${dayProgress}%`, transition: 'width 0.7s ease' }}
                       />
                     </div>
                   </div>
@@ -168,11 +222,11 @@ export default function JadwalPelajaran() {
                   <button
                     key={d}
                     onClick={() => setActive(d)}
-                    className={`relative rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ease-smooth ${
+                    className={`relative rounded-full px-4 py-2 text-sm font-medium transition-colors duration-300 ${
                       isActive
                         ? 'bg-gradient-to-br from-brand-500 to-brand-700 text-cream-50 shadow-glow'
                         : isNextHint
-                          ? 'bg-white/5 border border-brand-400/40 text-ink-100 tab-hint'
+                          ? 'bg-white/5 border border-brand-400/40 text-ink-100'
                           : 'bg-white/5 border border-white/10 text-ink-200 hover:bg-white/10'
                     }`}
                   >
@@ -198,52 +252,9 @@ export default function JadwalPelajaran() {
               </div>
             ) : (
               <div className="reveal grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-                {slots.map((slot, i) => {
-                  const c = subjectColorMap[slot.accentColor];
-                  const slotNow = isNow(slot);
-                  return (
-                    <div
-                      key={slot.id}
-                      data-reveal-delay={i * 50}
-                      className={`reveal group relative overflow-hidden rounded-3xl border p-4 transition-all duration-500 ease-smooth hover:-translate-y-1 ${
-                        slotNow
-                          ? `border-brand-400/40 ${c.bg} ring-2 ${c.ring} shadow-glow`
-                          : 'border-white/5 bg-ink-800/50 hover:border-white/10'
-                      }`}
-                    >
-                      {slotNow && (
-                        <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-brand-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-200 ring-1 ring-inset ring-brand-400/40">
-                          <CircleDot className="h-3 w-3 animate-pulse-soft" />
-                          Now
-                        </span>
-                      )}
-
-                      <div className="flex items-center gap-2">
-                        <span className={`h-2.5 w-2.5 rounded-full ${c.dot}`} />
-                        <span className={`text-[11px] uppercase tracking-wider ${c.text}`}>
-                          {slot.start}–{slot.end}
-                        </span>
-                      </div>
-
-                      <h3 className="mt-2 font-display text-lg font-semibold text-ink-50">{slot.subject}</h3>
-
-                      <div className="mt-3 space-y-1.5 text-xs text-ink-300">
-                        <div className="flex items-center gap-2">
-                          <User className="h-3.5 w-3.5 text-ink-400" />
-                          {slot.teacher}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-3.5 w-3.5 text-ink-400" />
-                          Ruang {slot.room}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-3.5 w-3.5 text-ink-400" />
-                          {slot.start} – {slot.end}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                {slots.map((slot, i) => (
+                  <ScheduleCard key={slot.id} slot={slot} slotNow={isNow(slot)} index={i} />
+                ))}
               </div>
             )}
           </>
@@ -252,3 +263,5 @@ export default function JadwalPelajaran() {
     </section>
   );
 }
+
+export default memo(JadwalPelajaran);
