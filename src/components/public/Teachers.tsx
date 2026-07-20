@@ -1,10 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { MessageCircle, ArrowUpRight } from 'lucide-react';
-import { teachers, whatsappLink } from '../../lib/data';
+import { useQuery } from '../../hooks/useQuery';
+import { fetchTeachers } from '../../lib/queries';
+import { whatsappLink } from '../../lib/data';
 import { useReveal } from '../../hooks/useReveal';
+import { LoadingState, ErrorState } from '../QueryState';
 
 export default function Teachers() {
   useReveal();
+  const { data, loading, error, refetch } = useQuery(fetchTeachers);
   const trackRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ active: boolean; startX: number; startScroll: number; moved: boolean }>({
     active: false,
@@ -13,7 +17,6 @@ export default function Teachers() {
     moved: false,
   });
 
-  // Desktop: wheel converts to horizontal scroll (Shift+wheel also works natively).
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
@@ -25,7 +28,7 @@ export default function Teachers() {
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, []);
+  }, [data]);
 
   const onPointerDown = (e: React.PointerEvent) => {
     const el = trackRef.current;
@@ -46,6 +49,8 @@ export default function Teachers() {
     el?.releasePointerCapture?.(e.pointerId);
   };
 
+  const teachers = data ?? [];
+
   return (
     <section id="teachers" className="relative py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -62,58 +67,73 @@ export default function Teachers() {
         </div>
       </div>
 
-      {/* Edge-faded horizontal carousel — desktop wheel/drag, mobile swipe */}
-      <div className="group/carousel relative">
-        <div
-          ref={trackRef}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerLeave={onPointerUp}
-          className="grab no-scrollbar snap-x-mandatory flex gap-4 overflow-x-auto px-4 sm:px-6 pb-4 pt-1 scroll-smooth"
-        >
-          {/* Leading spacer to align cards to the max-w-7xl grid */}
-          <div className="hidden lg:block shrink-0" style={{ width: 'max(0px, calc((100vw - 80rem) / 2))' }} aria-hidden />
-          {teachers.map((t, i) => (
-            <article
-              key={t.id}
-              data-reveal-delay={i * 70}
-              className="reveal snap-start group shrink-0 w-[78%] sm:w-[42%] lg:w-[15.5rem] xl:w-[16rem] card-surface relative overflow-hidden p-5 transition-all duration-500 ease-smooth hover:-translate-y-1 hover:border-brand-400/30 hover:shadow-card"
-            >
-              <div className="relative h-40 w-full overflow-hidden rounded-2xl ring-1 ring-inset ring-white/10">
-                <img
-                  src={t.photo}
-                  alt={t.name}
-                  loading="lazy"
-                  draggable={false}
-                  className="h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink-950/70 to-transparent" />
-              </div>
-
-              <h3 className="mt-4 font-display text-lg font-semibold text-ink-50">{t.name}</h3>
-              <p className="text-sm text-brand-300">{t.subject}</p>
-
-              <a
-                href={whatsappLink(t.whatsapp ?? '6281234567890')}
-                target="_blank"
-                rel="noreferrer"
-                onClick={(e) => drag.current.moved && e.preventDefault()}
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-2 text-xs font-medium text-ink-100 hover:bg-white/10 hover:border-brand-400/30 transition-all duration-300 ease-smooth"
-              >
-                <MessageCircle className="h-3.5 w-3.5" />
-                WhatsApp
-                <ArrowUpRight className="h-3.5 w-3.5 ml-auto text-ink-400 group-hover:text-brand-300 transition" />
-              </a>
-            </article>
-          ))}
-          <div className="shrink-0 w-1" aria-hidden />
+      {loading ? (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <LoadingState label="Memuat daftar guru" />
         </div>
+      ) : error ? (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <ErrorState message={error} onRetry={refetch} />
+        </div>
+      ) : teachers.length === 0 ? (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="reveal card-surface p-10 text-center text-ink-300">
+            Belum ada data guru yang tersedia.
+          </div>
+        </div>
+      ) : (
+        <div className="group/carousel relative">
+          <div
+            ref={trackRef}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerLeave={onPointerUp}
+            className="grab no-scrollbar snap-x-mandatory flex gap-4 overflow-x-auto px-4 sm:px-6 pb-4 pt-1 scroll-smooth"
+          >
+            <div className="hidden lg:block shrink-0" style={{ width: 'max(0px, calc((100vw - 80rem) / 2))' }} aria-hidden />
+            {teachers.map((t, i) => (
+              <article
+                key={t.id}
+                data-reveal-delay={i * 70}
+                className="reveal snap-start group shrink-0 w-[78%] sm:w-[42%] lg:w-[15.5rem] xl:w-[16rem] card-surface relative overflow-hidden p-5 transition-all duration-500 ease-smooth hover:-translate-y-1 hover:border-brand-400/30 hover:shadow-card"
+              >
+                <div className="relative h-40 w-full overflow-hidden rounded-2xl ring-1 ring-inset ring-white/10">
+                  <img
+                    src={t.photo}
+                    alt={t.name}
+                    loading="lazy"
+                    draggable={false}
+                    className="h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-ink-950/70 to-transparent" />
+                </div>
 
-        {/* Edge fade masks */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-6 sm:w-10 bg-gradient-to-r from-[#0c0a09] to-transparent opacity-70" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 sm:w-10 bg-gradient-to-l from-[#0c0a09] to-transparent opacity-70" />
-      </div>
+                <h3 className="mt-4 font-display text-lg font-semibold text-ink-50">{t.name}</h3>
+                <p className="text-sm text-brand-300">{t.subject}</p>
+
+                {t.whatsapp && (
+                  <a
+                    href={whatsappLink(t.whatsapp)}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => drag.current.moved && e.preventDefault()}
+                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-2 text-xs font-medium text-ink-100 hover:bg-white/10 hover:border-brand-400/30 transition-all duration-300 ease-smooth"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    WhatsApp
+                    <ArrowUpRight className="h-3.5 w-3.5 ml-auto text-ink-400 group-hover:text-brand-300 transition" />
+                  </a>
+                )}
+              </article>
+            ))}
+            <div className="shrink-0 w-1" aria-hidden />
+          </div>
+
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-6 sm:w-10 bg-gradient-to-r from-[#0c0a09] to-transparent opacity-70" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-6 sm:w-10 bg-gradient-to-l from-[#0c0a09] to-transparent opacity-70" />
+        </div>
+      )}
     </section>
   );
 }

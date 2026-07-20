@@ -1,15 +1,13 @@
-import { useMemo } from 'react';
 import { BookOpen, Clock, CalendarDays } from 'lucide-react';
-import { assignments, assignmentStatusMap } from '../../lib/data';
+import { useQuery } from '../../hooks/useQuery';
+import { fetchAssignments } from '../../lib/queries';
+import { assignmentStatusMap } from '../../lib/data';
 import { useReveal } from '../../hooks/useReveal';
+import { LoadingState, ErrorState } from '../QueryState';
 
 export default function TugasMingguIni() {
   useReveal();
-
-  const sorted = useMemo(
-    () => [...assignments].sort((a, b) => a.dueDate.localeCompare(b.dueDate)),
-    []
-  );
+  const { data, loading, error, refetch } = useQuery(fetchAssignments);
 
   const fmt = (iso: string) =>
     new Date(iso + 'T00:00:00').toLocaleDateString('id-ID', {
@@ -30,7 +28,6 @@ export default function TugasMingguIni() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        {/* Section header */}
         <div className="reveal flex flex-col items-start gap-3 mb-8">
           <span className="section-eyebrow">
             <BookOpen className="h-3.5 w-3.5" />
@@ -43,13 +40,17 @@ export default function TugasMingguIni() {
           </p>
         </div>
 
-        {sorted.length === 0 ? (
+        {loading ? (
+          <LoadingState label="Memuat tugas" />
+        ) : error ? (
+          <ErrorState message={error} onRetry={refetch} />
+        ) : !data || data.length === 0 ? (
           <div className="reveal card-surface p-10 text-center text-ink-300">
             Tidak ada tugas aktif minggu ini. Waktu yang baik untuk menggambar.
           </div>
         ) : (
           <div className="reveal grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sorted.map((a, i) => {
+            {data.map((a, i) => {
               const s = assignmentStatusMap[a.status];
               const left = daysLeft(a.dueDate);
               return (

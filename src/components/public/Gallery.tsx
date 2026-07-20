@@ -1,24 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
-import { gallery, type GalleryItem } from '../../lib/data';
+import { useQuery } from '../../hooks/useQuery';
+import { fetchGallery } from '../../lib/queries';
 import { useReveal } from '../../hooks/useReveal';
+import { LoadingState, ErrorState } from '../QueryState';
+import type { GalleryItem } from '../../lib/data';
 
 export default function Gallery() {
   const [active, setActive] = useState<number | null>(null);
-  useReveal();
-
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    gallery.forEach((g) => set.add(g.category));
-    return ['Semua', ...Array.from(set)];
-  }, []);
-
   const [filter, setFilter] = useState<string>('Semua');
+  useReveal();
+  const { data, loading, error, refetch } = useQuery(fetchGallery);
+
+  const items = data?.items ?? [];
+  const categories = data?.categories ?? [];
 
   const list = useMemo(() => {
-    if (filter === 'Semua') return gallery;
-    return gallery.filter((g) => g.category === filter);
-  }, [filter]);
+    if (filter === 'Semua') return items;
+    return items.filter((g) => g.category === filter);
+  }, [items, filter]);
 
   useEffect(() => {
     if (active === null) return;
@@ -51,90 +51,98 @@ export default function Gallery() {
           </p>
         </div>
 
-        {/* Filters */}
-        <div className="reveal flex flex-wrap gap-2 mb-8">
-          {categories.map((c) => {
-            const isActive = filter === c;
-            return (
-              <button
-                key={c}
-                onClick={() => setFilter(c)}
-                className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all duration-300 ease-smooth ${
-                  isActive
-                    ? 'bg-gradient-to-br from-brand-500 to-brand-700 text-cream-50 shadow-glow'
-                    : 'bg-white/5 border border-white/10 text-ink-200 hover:bg-white/10'
-                }`}
-              >
-                {c}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* "Semua" — curated artistic masonry; tight auto-rows fill gaps naturally */}
-        {isSemua ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[170px] sm:auto-rows-[200px] gap-3">
-            {list.map((item, i) => (
-              <button
-                key={item.id}
-                onClick={() => setActive(i)}
-                data-reveal-delay={(i % 4) * 60}
-                className={`reveal group relative overflow-hidden rounded-3xl border border-white/5 bg-ink-800/60 ${spanClass(item.span)}`}
-              >
-                <img
-                  src={item.src}
-                  alt={item.title}
-                  loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 via-ink-950/10 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-100" />
-
-                <div className="absolute inset-0 flex flex-col justify-end p-4 text-left">
-                  <span className="text-[10px] uppercase tracking-wider text-brand-200">{item.category}</span>
-                  <h3 className="mt-1 text-sm font-semibold text-ink-50 line-clamp-2">{item.title}</h3>
-                </div>
-
-                <span className="absolute top-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-md text-ink-50 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 scale-90">
-                  <ZoomIn className="h-4 w-4" />
-                </span>
-              </button>
-            ))}
+        {loading ? (
+          <LoadingState label="Memuat galeri" />
+        ) : error ? (
+          <ErrorState message={error} onRetry={refetch} />
+        ) : items.length === 0 ? (
+          <div className="reveal card-surface p-10 text-center text-ink-300">
+            Belum ada foto di galeri.
           </div>
         ) : (
-          /* Individual category — complete archive, uniform grid, equal cards */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {list.map((item, i) => (
-              <button
-                key={item.id}
-                onClick={() => setActive(i)}
-                data-reveal-delay={(i % 4) * 50}
-                className="reveal group relative overflow-hidden rounded-3xl border border-white/5 bg-ink-800/60 aspect-[4/3]"
-              >
-                <img
-                  src={item.src}
-                  alt={item.title}
-                  loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink-950/85 via-ink-950/15 to-transparent opacity-85 transition-opacity duration-500 group-hover:opacity-100" />
+          <>
+            {/* Filters */}
+            <div className="reveal flex flex-wrap gap-2 mb-8">
+              {['Semua', ...categories].map((c) => {
+                const isActive = filter === c;
+                return (
+                  <button
+                    key={c}
+                    onClick={() => setFilter(c)}
+                    className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all duration-300 ease-smooth ${
+                      isActive
+                        ? 'bg-gradient-to-br from-brand-500 to-brand-700 text-cream-50 shadow-glow'
+                        : 'bg-white/5 border border-white/10 text-ink-200 hover:bg-white/10'
+                    }`}
+                  >
+                    {c}
+                  </button>
+                );
+              })}
+            </div>
 
-                <div className="absolute inset-0 flex flex-col justify-end p-4 text-left">
-                  <span className="text-[10px] uppercase tracking-wider text-brand-200">{item.category}</span>
-                  <h3 className="mt-1 text-sm font-semibold text-ink-50 line-clamp-2">{item.title}</h3>
-                </div>
+            {list.length === 0 ? (
+              <div className="reveal card-surface p-10 text-center text-ink-300">
+                Tidak ada foto dalam kategori ini.
+              </div>
+            ) : isSemua ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[170px] sm:auto-rows-[200px] gap-3">
+                {list.map((item, i) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActive(i)}
+                    data-reveal-delay={(i % 4) * 60}
+                    className={`reveal group relative overflow-hidden rounded-3xl border border-white/5 bg-ink-800/60 ${spanClass(item.span)}`}
+                  >
+                    <img
+                      src={item.src}
+                      alt={item.title}
+                      loading="lazy"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 via-ink-950/10 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-100" />
 
-                <span className="absolute top-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-md text-ink-50 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 scale-90">
-                  <ZoomIn className="h-4 w-4" />
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
+                    <div className="absolute inset-0 flex flex-col justify-end p-4 text-left">
+                      <span className="text-[10px] uppercase tracking-wider text-brand-200">{item.category}</span>
+                      <h3 className="mt-1 text-sm font-semibold text-ink-50 line-clamp-2">{item.title}</h3>
+                    </div>
 
-        {list.length === 0 && (
-          <div className="reveal card-surface p-10 text-center text-ink-300">
-            Tidak ada foto dalam kategori ini.
-          </div>
+                    <span className="absolute top-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-md text-ink-50 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 scale-90">
+                      <ZoomIn className="h-4 w-4" />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {list.map((item, i) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActive(i)}
+                    data-reveal-delay={(i % 4) * 50}
+                    className="reveal group relative overflow-hidden rounded-3xl border border-white/5 bg-ink-800/60 aspect-[4/3]"
+                  >
+                    <img
+                      src={item.src}
+                      alt={item.title}
+                      loading="lazy"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-ink-950/85 via-ink-950/15 to-transparent opacity-85 transition-opacity duration-500 group-hover:opacity-100" />
+
+                    <div className="absolute inset-0 flex flex-col justify-end p-4 text-left">
+                      <span className="text-[10px] uppercase tracking-wider text-brand-200">{item.category}</span>
+                      <h3 className="mt-1 text-sm font-semibold text-ink-50 line-clamp-2">{item.title}</h3>
+                    </div>
+
+                    <span className="absolute top-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-md text-ink-50 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 scale-90">
+                      <ZoomIn className="h-4 w-4" />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
