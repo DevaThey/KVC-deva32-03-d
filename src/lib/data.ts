@@ -6,27 +6,42 @@
 
 export interface Highlight {
   id: string;
-  image: string;
   title: string;
+  subtitle: string;
+  image: string;
   description: string;
-  tag: string;
+  displayOrder: number;
 }
 
 export interface GalleryItem {
   id: string;
-  src: string;
-  title: string;
   category: string;
-  span?: 'tall' | 'wide' | 'normal';
+  title: string;
+  image: string;
+  description: string;
+  featured: boolean;
+  displayOrder: number;
 }
 
 export interface Teacher {
   id: string;
   name: string;
   subject: string;
+  position: string;
+  phone: string;
+  whatsappUrl: string;
   photo: string;
-  email: string;
-  whatsapp?: string;
+  displayOrder: number;
+}
+
+export interface PlaylistTrack {
+  id: string;
+  title: string;
+  artist: string;
+  duration: string;
+  spotifyUrl: string;
+  coverImage: string;
+  displayOrder: number;
 }
 
 export interface NavItem {
@@ -36,37 +51,66 @@ export interface NavItem {
 
 // ---------- Student Portal ----------
 
-export type DayKey = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri';
+export type DayKey = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
+
+export type SubjectColor = 'brand' | 'cream' | 'emerald' | 'sky' | 'rose' | 'violet';
 
 export interface ScheduleSlot {
   id: string;
   day: DayKey;
-  start: string;
-  end: string;
+  lessonOrder: number;
   subject: string;
   teacher: string;
   room: string;
-  color: SubjectColor;
+  start: string;
+  end: string;
+  accentColor: SubjectColor;
+  active: boolean;
 }
-
-export type SubjectColor = 'brand' | 'cream' | 'emerald' | 'sky' | 'rose' | 'violet';
 
 export interface PiketSlot {
   id: string;
   day: DayKey;
-  coordinator: string;
   members: string[];
+  notes: string;
 }
 
 export interface Assignment {
   id: string;
   title: string;
   subject: string;
-  dueDate: string; // ISO date
-  status: AssignmentStatus;
+  teacher: string;
+  description: string;
+  dueDate: string;
+  status: string;
+  attachmentUrl: string;
+  sortOrder: number;
 }
 
-export type AssignmentStatus = 'Belum Mulai' | 'Berjalan' | 'Selesai' | 'Terlambat';
+// ---------- Site-wide settings ----------
+
+export interface ClassInformation {
+  id: string;
+  className: string;
+  school: string;
+  major: string;
+  academicYear: string;
+  location: string;
+  studentCount: number;
+  establishedYear: number;
+  aboutText: string;
+}
+
+export interface WebsiteSettings {
+  id: string;
+  loadingLogo: string;
+  welcomeTitle: string;
+  welcomeSubtitle: string;
+  spotifyPlaylist: string;
+  heroImage: string;
+  heroText: string;
+  footerText: string;
+}
 
 // ---------- Collections ----------
 
@@ -79,57 +123,25 @@ export const publicNav: NavItem[] = [
   { label: 'Guru', href: '#teachers' },
 ];
 
-// ---------- Portal Data ----------
+// ---------- Portal day system ----------
 
 export const dayFull: Record<DayKey, string> = {
-  Mon: 'Senin',
-  Tue: 'Selasa',
-  Wed: 'Rabu',
-  Thu: 'Kamis',
-  Fri: 'Jumat',
+  Monday: 'Senin',
+  Tuesday: 'Selasa',
+  Wednesday: 'Rabu',
+  Thursday: 'Kamis',
+  Friday: 'Jumat',
 };
 
 export const dayShort: Record<DayKey, string> = {
-  Mon: 'Sen',
-  Tue: 'Sel',
-  Wed: 'Rab',
-  Thu: 'Kam',
-  Fri: 'Jum',
+  Monday: 'Sen',
+  Tuesday: 'Sel',
+  Wednesday: 'Rab',
+  Thursday: 'Kam',
+  Friday: 'Jum',
 };
 
-export const days: DayKey[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-
-// ---------- Playlist Kelas ----------
-
-export interface PlaylistTrack {
-  id: string;
-  title: string;
-  artist: string;
-  duration: string; // mm:ss
-}
-
-export interface Playlist {
-  id: string;
-  title: string;
-  description: string;
-  cover: string;
-  embedUrl: string; // Spotify embed URL
-  openUrl: string; // Spotify open URL
-  totalSongs: number;
-  lastUpdated: string; // ISO date
-  tracks: PlaylistTrack[];
-}
-
-// ---------- Mood Kreatif Hari Ini ----------
-
-export interface CreativeMood {
-  id: string;
-  quote: string;
-  quoteAuthor: string;
-  colorOfTheWeek: { name: string; hex: string };
-  fontOfTheWeek: { name: string; specimen: string };
-  artwork: { title: string; src: string };
-}
+export const days: DayKey[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 // ---------- Maps ----------
 
@@ -142,19 +154,21 @@ export const subjectColorMap: Record<SubjectColor, { bg: string; dot: string; te
   violet: { bg: 'bg-violet-500/15', dot: 'bg-violet-400', text: 'text-violet-200', ring: 'ring-violet-400/40' },
 };
 
-export const assignmentStatusMap: Record<AssignmentStatus, { chip: string; dot: string }> = {
-  'Belum Mulai': { chip: 'bg-ink-500/20 text-ink-200 border-ink-400/30', dot: 'bg-ink-400' },
-  Berjalan: { chip: 'bg-sky-500/15 text-sky-200 border-sky-400/30', dot: 'bg-sky-400' },
-  Selesai: { chip: 'bg-emerald-500/15 text-emerald-200 border-emerald-400/30', dot: 'bg-emerald-400' },
-  Terlambat: { chip: 'bg-rose-500/15 text-rose-200 border-rose-400/30', dot: 'bg-rose-400' },
-};
+export const galleryCategories = [
+  'Activity',
+  'Competition',
+  'Workshop',
+  'Behind The Scenes',
+  'Project',
+  'Event',
+] as const;
 
 // ---------- Helpers ----------
 
 export function currentDayKey(): DayKey | null {
   const d = new Date().getDay();
   const map: Record<number, DayKey | null> = {
-    0: null, 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: null,
+    0: null, 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday', 4: 'Thursday', 5: 'Friday', 6: null,
   };
   return map[d] ?? null;
 }
@@ -162,11 +176,6 @@ export function currentDayKey(): DayKey | null {
 export function nextDayKey(day: DayKey): DayKey {
   const idx = days.indexOf(day);
   return days[(idx + 1) % days.length] as DayKey;
-}
-
-export function whatsappLink(number: string): string {
-  const clean = number.replace(/\D/g, '');
-  return `https://wa.me/${clean}`;
 }
 
 export function isNow(slot: ScheduleSlot): boolean {

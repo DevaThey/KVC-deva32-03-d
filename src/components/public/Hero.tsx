@@ -1,7 +1,20 @@
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { scrollTo } from '../../hooks/useReveal';
+import { useQuery } from '../../hooks/useQuery';
+import { fetchClassInformation, fetchWebsiteSettings } from '../../lib/queries';
 
 export default function Hero() {
+  const { data: info } = useQuery(fetchClassInformation);
+  const { data: settings } = useQuery(fetchWebsiteSettings);
+
+  const className = info?.className ?? 'Kelas XI DKV 2';
+  const school = info?.school ?? 'SMK TI Bali Global Denpasar';
+  const heroText = settings?.heroText ?? 'Selamat datang di ruang kreatif kami — tempat karya, cerita, dan keseharian Kelas XI DKV 2 berkumpul.';
+  const welcomeTitle = settings?.welcomeTitle ?? 'Kavitwo Connect';
+  const studentCount = info?.studentCount ?? 30;
+  const subjectCount = 10;
+  const teacherCount = 4;
+
   return (
     <section id="home" className="relative min-h-screen overflow-hidden pt-28 pb-16">
       {/* Background */}
@@ -19,16 +32,15 @@ export default function Hero() {
           <div className="reveal is-visible flex flex-wrap items-center gap-3">
             <span className="chip border-brand-400/30 bg-brand-500/10 text-brand-200">
               <Sparkles className="h-3.5 w-3.5" />
-              Kelas XI DKV 2
+              {className}
             </span>
-            <span className="chip">SMK TI Bali Global Denpasar</span>
-            <span className="chip">Tahun Ajaran 2026/2027</span>
+            <span className="chip">{school}</span>
           </div>
 
           <div className="reveal is-visible" style={{ transitionDelay: '80ms' }}>
             <h1 className="font-display text-[clamp(3.5rem,11vw,9rem)] font-extrabold leading-[0.92] tracking-tight text-balance">
               <span className="bg-gradient-to-br from-cream-50 via-cream-200 to-brand-300 bg-clip-text text-transparent">
-                Kavitwo Connect
+                {welcomeTitle}
               </span>
             </h1>
           </div>
@@ -37,8 +49,7 @@ export default function Hero() {
             className="reveal is-visible max-w-md text-lg sm:text-xl text-ink-200 leading-relaxed"
             style={{ transitionDelay: '160ms' }}
           >
-            Selamat datang di ruang kreatif kami — tempat karya, cerita, dan
-            keseharian Kelas XI DKV 2 berkumpul.
+            {heroText}
           </p>
 
           <div
@@ -59,9 +70,9 @@ export default function Hero() {
             style={{ transitionDelay: '320ms' }}
           >
             {[
-              { k: '30', v: 'Siswa' },
-              { k: '10', v: 'Mapel' },
-              { k: '4', v: 'Guru' },
+              { k: String(studentCount), v: 'Siswa' },
+              { k: String(subjectCount), v: 'Mapel' },
+              { k: String(teacherCount), v: 'Guru' },
             ].map((s) => (
               <div
                 key={s.v}

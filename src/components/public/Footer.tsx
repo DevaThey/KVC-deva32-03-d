@@ -1,7 +1,16 @@
 import { Sparkles, Instagram, ArrowLeft, MessageSquare, Music2 } from 'lucide-react';
 import { publicNav } from '../../lib/data';
+import { useQuery } from '../../hooks/useQuery';
+import { fetchClassInformation, fetchWebsiteSettings } from '../../lib/queries';
 
 export default function Footer({ onHome }: { onHome: () => void }) {
+  const { data: info } = useQuery(fetchClassInformation);
+  const { data: settings } = useQuery(fetchWebsiteSettings);
+
+  const className = info?.className ?? 'Kelas XI DKV 2';
+  const school = info?.school ?? 'SMK TI Bali Global Denpasar';
+  const footerText = settings?.footerText ?? `Rumah Digital ${className}, ${school}. Dirancang dan dirawat oleh kelas sebagai portfolio hidup cara kami bekerja.`;
+
   return (
     <footer className="relative mt-10 border-t border-white/5">
       <div className="pointer-events-none absolute inset-0 -z-10">
@@ -19,9 +28,7 @@ export default function Footer({ onHome }: { onHome: () => void }) {
               <span className="font-display text-lg font-bold text-ink-50">Kavitwo</span>
             </div>
             <p className="mt-4 max-w-sm text-sm text-ink-300 leading-relaxed">
-              Rumah digital Kelas XI DKV 2, SMK TI Bali Global Denpasar.
-              Dirancang dan dirawat oleh kelas sebagai portfolio hidup cara
-              kami bekerja.
+              {footerText}
             </p>
 
             <div className="mt-5 flex items-center gap-2">
@@ -76,7 +83,7 @@ export default function Footer({ onHome }: { onHome: () => void }) {
 
         <div className="mt-12 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-ink-400">
-            © {new Date().getFullYear()} Kavitwo · Kelas XI DKV 2. Hak cipta dilindungi.
+            © {new Date().getFullYear()} Kavitwo · {className}. Hak cipta dilindungi.
           </p>
           <button
             onClick={onHome}

@@ -3,272 +3,178 @@ import type {
   Highlight,
   GalleryItem,
   Teacher,
+  PlaylistTrack,
   ScheduleSlot,
   PiketSlot,
   Assignment,
-  Playlist,
-  PlaylistTrack,
-  CreativeMood,
+  ClassInformation,
+  WebsiteSettings,
   DayKey,
   SubjectColor,
-  AssignmentStatus,
 } from './data';
 
 const fmtTime = (t: string) => t.slice(0, 5);
 
-// Minimal relation shapes for the raw Supabase response (untyped client
-// returns nested rows as arrays; we cast to scalars where the relation is
-// many-to-one). Keep these local to avoid leaking Supabase naming into the
-// public type interfaces in data.ts.
-
-interface RawGalleryRow {
-  id: string;
-  title: string;
-  image_url: string;
-  span: string | null;
-  gallery_categories: { name: string } | { name: string }[] | null;
-}
-interface RawScheduleRow {
-  id: string;
-  day: DayKey;
-  start_time: string;
-  end_time: string;
-  subjects: { name: string; color_key: SubjectColor } | { name: string; color_key: SubjectColor }[] | null;
-  teachers: { name: string } | { name: string }[] | null;
-  rooms: { code: string } | { code: string }[] | null;
-}
-interface RawPiketRow {
-  id: string;
-  day: DayKey;
-  students: { name: string } | { name: string }[] | null;
-  piket_members: {
-    sort_order: number | null;
-    students: { name: string } | { name: string }[] | null;
-  }[] | null;
-}
-interface RawAssignmentRow {
-  id: string;
-  title: string;
-  due_date: string;
-  status: AssignmentStatus;
-  subjects: { name: string } | { name: string }[] | null;
-}
-interface RawPlaylistRow {
-  id: string;
-  title: string;
-  description: string | null;
-  cover_url: string | null;
-  embed_url: string | null;
-  open_url: string | null;
-  total_songs: number;
-  last_updated: string | null;
-  playlist_tracks: {
-    id: string;
-    title: string;
-    artist: string;
-    duration: string;
-    sort_order: number | null;
-  }[] | null;
-}
-interface RawMoodRow {
-  id: string;
-  quote: string;
-  quote_author: string;
-  color_name: string | null;
-  color_hex: string | null;
-  font_name: string | null;
-  font_specimen: string | null;
-  artwork_title: string | null;
-  artwork_url: string | null;
-  week_start: string | null;
-}
-
-// Supabase returns many-to-one relations as a single object, but the untyped
-// client types them as arrays. This helper safely extracts the scalar value.
-function one<T>(rel: T | T[] | null): T | null {
-  if (rel == null) return null;
-  return Array.isArray(rel) ? (rel[0] as T) : (rel as T);
-}
-
 export async function fetchHighlights(): Promise<Highlight[]> {
   const { data, error } = await supabase
     .from('highlights')
-    .select('id, title, description, image_url, tag')
-    .eq('published', true)
-    .order('sort_order', { ascending: true });
+    .select('id, title, subtitle, image, description, display_order')
+    .order('display_order', { ascending: true });
   if (error) throw error;
   return (data ?? []).map((r) => ({
     id: r.id,
-    image: r.image_url,
     title: r.title,
+    subtitle: r.subtitle ?? '',
+    image: r.image,
     description: r.description,
-    tag: r.tag ?? '',
+    displayOrder: r.display_order,
   }));
 }
 
-export async function fetchGallery(): Promise<{ items: GalleryItem[]; categories: string[] }> {
-  const [itemsRes, catsRes] = await Promise.all([
-    supabase
-      .from('gallery_items')
-      .select('id, title, image_url, span, gallery_categories(name)')
-      .eq('published', true)
-      .order('sort_order', { ascending: true }),
-    supabase
-      .from('gallery_categories')
-      .select('name')
-      .order('sort_order', { ascending: true }),
-  ]);
-
-  if (itemsRes.error) throw itemsRes.error;
-  if (catsRes.error) throw catsRes.error;
-
-  const items: GalleryItem[] = (itemsRes.data as RawGalleryRow[] ?? []).map((r) => ({
+export async function fetchGallery(): Promise<GalleryItem[]> {
+  const { data, error } = await supabase
+    .from('gallery')
+    .select('id, category, title, image, description, featured, display_order')
+    .order('display_order', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((r) => ({
     id: r.id,
-    src: r.image_url,
+    category: r.category,
     title: r.title,
-    category: one(r.gallery_categories)?.name ?? 'Lainnya',
-    span: (r.span as GalleryItem['span']) ?? undefined,
+    image: r.image,
+    description: r.description ?? '',
+    featured: r.featured,
+    displayOrder: r.display_order,
   }));
-
-  const categories = (catsRes.data ?? []).map((r) => r.name);
-
-  return { items, categories };
 }
 
 export async function fetchTeachers(): Promise<Teacher[]> {
   const { data, error } = await supabase
     .from('teachers')
-    .select('id, name, email, whatsapp, photo_url, role')
-    .order('created_at', { ascending: true });
+    .select('id, name, subject, position, phone, whatsapp_url, photo, display_order')
+    .order('display_order', { ascending: true });
   if (error) throw error;
   return (data ?? []).map((r) => ({
     id: r.id,
     name: r.name,
-    subject: r.role ?? 'Pengajar',
-    photo: r.photo_url ?? '',
-    email: r.email,
-    whatsapp: r.whatsapp ?? undefined,
+    subject: r.subject,
+    position: r.position ?? '',
+    phone: r.phone ?? '',
+    whatsappUrl: r.whatsapp_url ?? '',
+    photo: r.photo,
+    displayOrder: r.display_order,
+  }));
+}
+
+export async function fetchPlaylist(): Promise<PlaylistTrack[]> {
+  const { data, error } = await supabase
+    .from('playlist')
+    .select('id, title, artist, duration, spotify_url, cover_image, display_order')
+    .order('display_order', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    title: r.title,
+    artist: r.artist,
+    duration: r.duration,
+    spotifyUrl: r.spotify_url ?? '',
+    coverImage: r.cover_image ?? '',
+    displayOrder: r.display_order,
   }));
 }
 
 export async function fetchSchedule(): Promise<ScheduleSlot[]> {
   const { data, error } = await supabase
-    .from('schedule_slots')
-    .select(
-      'id, day, start_time, end_time, subjects(name, color_key), teachers(name), rooms(code)'
-    )
-    .order('start_time', { ascending: true });
+    .from('schedule')
+    .select('id, day, lesson_order, subject, teacher, room, start_time, end_time, accent_color, active')
+    .order('lesson_order', { ascending: true });
   if (error) throw error;
-  return (data as RawScheduleRow[] ?? []).map((r) => ({
+  return (data ?? []).map((r) => ({
     id: r.id,
-    day: r.day,
+    day: r.day as DayKey,
+    lessonOrder: r.lesson_order,
+    subject: r.subject,
+    teacher: r.teacher,
+    room: r.room,
     start: fmtTime(r.start_time),
     end: fmtTime(r.end_time),
-    subject: one(r.subjects)?.name ?? '—',
-    teacher: one(r.teachers)?.name ?? '—',
-    room: one(r.rooms)?.code ?? '—',
-    color: one(r.subjects)?.color_key ?? 'brand',
+    accentColor: r.accent_color as SubjectColor,
+    active: r.active,
   }));
 }
 
 export async function fetchPiket(): Promise<PiketSlot[]> {
   const { data, error } = await supabase
-    .from('piket_assignments')
-    .select('id, day, students(name), piket_members(sort_order, students(name))')
+    .from('piket_schedule')
+    .select('id, day, member_1, member_2, member_3, member_4, notes')
     .order('day', { ascending: true });
   if (error) throw error;
-  return (data as RawPiketRow[] ?? []).map((r) => ({
+  return (data ?? []).map((r) => ({
     id: r.id,
-    day: r.day,
-    coordinator: one(r.students)?.name ?? '—',
-    members: (r.piket_members ?? [])
-      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-      .map((m) => one(m.students)?.name ?? '')
-      .filter(Boolean),
+    day: r.day as DayKey,
+    members: [r.member_1, r.member_2, r.member_3, r.member_4].filter((m): m is string => Boolean(m?.trim())),
+    notes: r.notes ?? '',
   }));
 }
 
 export async function fetchAssignments(): Promise<Assignment[]> {
   const { data, error } = await supabase
     .from('assignments')
-    .select('id, title, due_date, status, subjects(name)')
-    .order('due_date', { ascending: true });
+    .select('id, title, subject, teacher, description, due_date, status, attachment_url, sort_order')
+    .order('sort_order', { ascending: true });
   if (error) throw error;
-  return (data as RawAssignmentRow[] ?? []).map((r) => ({
+  return (data ?? []).map((r) => ({
     id: r.id,
     title: r.title,
-    subject: one(r.subjects)?.name ?? 'Umum',
+    subject: r.subject,
+    teacher: r.teacher ?? '',
+    description: r.description ?? '',
     dueDate: r.due_date,
     status: r.status,
+    attachmentUrl: r.attachment_url ?? '',
+    sortOrder: r.sort_order,
   }));
 }
 
-export async function fetchPlaylist(): Promise<Playlist | null> {
+export async function fetchClassInformation(): Promise<ClassInformation | null> {
   const { data, error } = await supabase
-    .from('playlists')
-    .select(
-      'id, title, description, cover_url, embed_url, open_url, total_songs, last_updated, playlist_tracks(id, title, artist, duration, sort_order)'
-    )
-    .eq('published', true)
+    .from('class_information')
+    .select('id, class_name, school, major, academic_year, location, student_count, established_year, about_text')
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
-
   if (error) throw error;
   if (!data) return null;
-
-  const row = data as RawPlaylistRow;
-
-  const tracks: PlaylistTrack[] = (row.playlist_tracks ?? [])
-    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-    .map((t) => ({
-      id: t.id,
-      title: t.title,
-      artist: t.artist,
-      duration: t.duration,
-    }));
-
   return {
-    id: row.id,
-    title: row.title,
-    description: row.description ?? '',
-    cover: row.cover_url ?? '',
-    embedUrl: row.embed_url ?? '',
-    openUrl: row.open_url ?? '',
-    totalSongs: row.total_songs ?? tracks.length,
-    lastUpdated: row.last_updated ?? '',
-    tracks,
+    id: data.id,
+    className: data.class_name,
+    school: data.school,
+    major: data.major,
+    academicYear: data.academic_year,
+    location: data.location,
+    studentCount: data.student_count,
+    establishedYear: data.established_year,
+    aboutText: data.about_text,
   };
 }
 
-export async function fetchCreativeMood(): Promise<CreativeMood | null> {
+export async function fetchWebsiteSettings(): Promise<WebsiteSettings | null> {
   const { data, error } = await supabase
-    .from('creative_mood')
-    .select('*')
-    .order('week_start', { ascending: false })
+    .from('website_settings')
+    .select('id, loading_logo, welcome_title, welcome_subtitle, spotify_playlist, hero_image, hero_text, footer_text')
+    .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
-
   if (error) throw error;
   if (!data) return null;
-
-  const row = data as RawMoodRow;
-
   return {
-    id: row.id,
-    quote: row.quote,
-    quoteAuthor: row.quote_author,
-    colorOfTheWeek: {
-      name: row.color_name ?? '',
-      hex: row.color_hex ?? '#000000',
-    },
-    fontOfTheWeek: {
-      name: row.font_name ?? '',
-      specimen: row.font_specimen ?? '',
-    },
-    artwork: {
-      title: row.artwork_title ?? '',
-      src: row.artwork_url ?? '',
-    },
+    id: data.id,
+    loadingLogo: data.loading_logo ?? '',
+    welcomeTitle: data.welcome_title,
+    welcomeSubtitle: data.welcome_subtitle,
+    spotifyPlaylist: data.spotify_playlist ?? '',
+    heroImage: data.hero_image ?? '',
+    heroText: data.hero_text ?? '',
+    footerText: data.footer_text ?? '',
   };
 }

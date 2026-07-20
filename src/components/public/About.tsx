@@ -1,5 +1,7 @@
 import { MapPin, Palette, Layers, Sparkles } from 'lucide-react';
 import { useReveal } from '../../hooks/useReveal';
+import { useQuery } from '../../hooks/useQuery';
+import { fetchClassInformation } from '../../lib/queries';
 
 const pillars = [
   {
@@ -21,6 +23,17 @@ const pillars = [
 
 export default function About() {
   useReveal();
+  const { data: info } = useQuery(fetchClassInformation);
+
+  const className = info?.className ?? 'Kavitwo';
+  const school = info?.school ?? 'SMK TI Bali Global Denpasar';
+  const major = info?.major ?? 'Desain Komunikasi Visual';
+  const academicYear = info?.academicYear ?? '2026/2027';
+  const location = info?.location ?? 'Denpasar, Bali';
+  const studentCount = info?.studentCount ?? 30;
+  const establishedYear = info?.establishedYear ?? 2024;
+  const aboutText = info?.aboutText ?? 'Kami adalah kelas vokasi Design Communication Visual yang percaya pada kerja tangan, kritik yang jujur, dan karya yang sederhana namun dipikirkan dengan matang.';
+
   return (
     <section id="about" className="relative py-14 sm:py-20">
       <div className="pointer-events-none absolute inset-0 -z-10">
@@ -39,19 +52,17 @@ export default function About() {
                 </span>
                 <h2 className="section-title">Bukan kelas biasa.</h2>
                 <p className="section-sub">
-                  Kami adalah kelas vokasi Design Communication Visual yang
-                  percaya pada kerja tangan, kritik yang jujur, dan karya yang
-                  sederhana namun dipikirkan dengan matang.
+                  {aboutText}
                 </p>
               </div>
 
               <div className="mt-5 flex flex-wrap gap-3">
                 <span className="chip border-brand-400/30 bg-brand-500/10 text-brand-200">
                   <MapPin className="h-3.5 w-3.5" />
-                  Denpasar, Bali
+                  {location}
                 </span>
-                <span className="chip">Sejak 2024</span>
-                <span className="chip">30 siswa</span>
+                <span className="chip">Sejak {establishedYear}</span>
+                <span className="chip">{studentCount} siswa</span>
               </div>
             </div>
 
@@ -90,15 +101,15 @@ export default function About() {
 
                 <div className="mt-6">
                   <div className="font-display text-3xl font-bold text-ink-50">Kavitwo</div>
-                  <div className="text-sm text-ink-300">Kelas XI DKV 2 · DKV</div>
+                  <div className="text-sm text-ink-300">{className} · DKV</div>
                 </div>
 
                 <div className="mt-6 space-y-2 flex-1">
                   {[
-                    { k: 'Sekolah', v: 'SMK TI Bali Global Denpasar' },
-                    { k: 'Jurusan', v: 'Desain Komunikasi Visual' },
+                    { k: 'Sekolah', v: school },
+                    { k: 'Jurusan', v: major },
                     { k: 'Kelas', v: 'XI (Sebelas)' },
-                    { k: 'Tahun Ajaran', v: '2026/2027' },
+                    { k: 'Tahun Ajaran', v: academicYear },
                   ].map((row) => (
                     <div
                       key={row.k}
@@ -111,7 +122,7 @@ export default function About() {
                 </div>
 
                 <div className="mt-6 flex items-center justify-between rounded-2xl bg-gradient-to-br from-brand-500/15 to-brand-700/10 border border-brand-400/20 px-4 py-3">
-                  <span className="text-xs text-brand-200">Dirancang &amp; dibuat oleh Kelas XI DKV 2</span>
+                  <span className="text-xs text-brand-200">Dirancang &amp; dibuat oleh {className}</span>
                   <span className="text-[10px] uppercase tracking-wider text-brand-300">v1.0</span>
                 </div>
               </div>

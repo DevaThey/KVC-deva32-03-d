@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ClipboardList, User, Users } from 'lucide-react';
+import { ClipboardList, User, Users, StickyNote } from 'lucide-react';
 import { useQuery } from '../../hooks/useQuery';
 import { fetchPiket } from '../../lib/queries';
 import { days, dayFull, dayShort, currentDayKey, type DayKey } from '../../lib/data';
@@ -8,7 +8,7 @@ import { LoadingState, ErrorState } from '../QueryState';
 
 export default function JadwalPiket() {
   const today = currentDayKey();
-  const [active, setActive] = useState<DayKey>(today ?? 'Mon');
+  const [active, setActive] = useState<DayKey>(today ?? 'Monday');
   useReveal();
   const { data, loading, error, refetch } = useQuery(fetchPiket);
 
@@ -30,10 +30,9 @@ export default function JadwalPiket() {
             <ClipboardList className="h-3.5 w-3.5" />
             Jadwal Piket
           </span>
-          <h2 className="section-title">Hari Ini</h2>
+          <h2 className="section-title">Siapa yang jaga hari ini?</h2>
           <p className="section-sub">
-            Koordinator dan anggota piket untuk setiap hari. Hari ini disorot
-            otomatis.
+            Anggota piket untuk setiap hari. Hari ini disorot otomatis.
           </p>
         </div>
 
@@ -68,7 +67,7 @@ export default function JadwalPiket() {
         ) : error ? (
           <ErrorState message={error} onRetry={refetch} />
         ) : !slot ? (
-          <div className="reveal card-surface p-10 text-center text-ink-300 mb-6">
+          <div className="reveal card-surface p-10 text-center text-ink-300">
             Tidak ada jadwal piket untuk hari ini.
           </div>
         ) : (
@@ -86,7 +85,7 @@ export default function JadwalPiket() {
                     </div>
                     <div>
                       <span className="text-xs uppercase tracking-wider text-ink-400">Koordinator</span>
-                      <h3 className="font-display text-2xl font-bold text-ink-50">{slot.coordinator}</h3>
+                      <h3 className="font-display text-2xl font-bold text-ink-50">{slot.members[0] ?? '—'}</h3>
                     </div>
                   </div>
                 </div>
@@ -95,16 +94,23 @@ export default function JadwalPiket() {
                   <div className="text-xs uppercase tracking-wider text-ink-400">Anggota</div>
                 </div>
               </div>
+
+              {slot.notes && (
+                <div className="relative mt-4 flex items-center gap-2 rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
+                  <StickyNote className="h-4 w-4 text-ink-400 shrink-0" />
+                  <span className="text-sm text-ink-200">{slot.notes}</span>
+                </div>
+              )}
             </div>
 
-            {slot.members.length > 0 && (
+            {slot.members.length > 1 && (
               <div className="reveal">
                 <div className="flex items-center gap-2 mb-3">
                   <Users className="h-4 w-4 text-ink-400" />
                   <h3 className="text-sm font-semibold text-ink-200 uppercase tracking-wider">Anggota Piket</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {slot.members.map((m, i) => (
+                  {slot.members.slice(1).map((m, i) => (
                     <div
                       key={m + i}
                       data-reveal-delay={i * 50}

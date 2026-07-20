@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { MessageCircle, ArrowUpRight } from 'lucide-react';
 import { useQuery } from '../../hooks/useQuery';
 import { fetchTeachers } from '../../lib/queries';
-import { whatsappLink } from '../../lib/data';
 import { useReveal } from '../../hooks/useReveal';
 import { LoadingState, ErrorState } from '../QueryState';
 
@@ -111,10 +110,13 @@ export default function Teachers() {
 
                 <h3 className="mt-4 font-display text-lg font-semibold text-ink-50">{t.name}</h3>
                 <p className="text-sm text-brand-300">{t.subject}</p>
+                {t.position && (
+                  <p className="text-xs text-ink-400">{t.position}</p>
+                )}
 
-                {t.whatsapp && (
+                {t.whatsappUrl && (
                   <a
-                    href={whatsappLink(t.whatsapp)}
+                    href={t.whatsappUrl}
                     target="_blank"
                     rel="noreferrer"
                     onClick={(e) => drag.current.moved && e.preventDefault()}

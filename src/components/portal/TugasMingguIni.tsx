@@ -1,7 +1,6 @@
-import { BookOpen, Clock, CalendarDays } from 'lucide-react';
+import { BookOpen, Clock, CalendarDays, FileText, User } from 'lucide-react';
 import { useQuery } from '../../hooks/useQuery';
 import { fetchAssignments } from '../../lib/queries';
-import { assignmentStatusMap } from '../../lib/data';
 import { useReveal } from '../../hooks/useReveal';
 import { LoadingState, ErrorState } from '../QueryState';
 
@@ -19,6 +18,13 @@ export default function TugasMingguIni() {
   const daysLeft = (iso: string) => {
     const diff = new Date(iso + 'T00:00:00').getTime() - Date.now();
     return Math.ceil(diff / 86400000);
+  };
+
+  const statusStyles: Record<string, { chip: string; dot: string }> = {
+    'Belum Mulai': { chip: 'border-ink-400/30 bg-ink-500/10 text-ink-200', dot: 'bg-ink-400' },
+    'Berjalan': { chip: 'border-sky-400/30 bg-sky-500/10 text-sky-200', dot: 'bg-sky-400' },
+    'Selesai': { chip: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200', dot: 'bg-emerald-400' },
+    'Terlambat': { chip: 'border-rose-400/30 bg-rose-500/10 text-rose-200', dot: 'bg-rose-400' },
   };
 
   return (
@@ -51,7 +57,7 @@ export default function TugasMingguIni() {
         ) : (
           <div className="reveal grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {data.map((a, i) => {
-              const s = assignmentStatusMap[a.status];
+              const s = statusStyles[a.status] ?? statusStyles['Belum Mulai'];
               const left = daysLeft(a.dueDate);
               return (
                 <article
@@ -73,6 +79,16 @@ export default function TugasMingguIni() {
                     {a.title}
                   </h3>
                   <p className="mt-1 text-sm text-brand-300">{a.subject}</p>
+                  {a.teacher && (
+                    <p className="mt-0.5 flex items-center gap-1 text-xs text-ink-400">
+                      <User className="h-3 w-3" />
+                      {a.teacher}
+                    </p>
+                  )}
+
+                  {a.description && (
+                    <p className="mt-3 text-xs text-ink-300 leading-relaxed line-clamp-3">{a.description}</p>
+                  )}
 
                   <div className="mt-4 flex items-center gap-2 text-xs text-ink-300">
                     <CalendarDays className="h-3.5 w-3.5 text-ink-400" />
@@ -81,6 +97,18 @@ export default function TugasMingguIni() {
                     <Clock className="h-3.5 w-3.5 text-ink-400" />
                     Deadline
                   </div>
+
+                  {a.attachmentUrl && (
+                    <a
+                      href={a.attachmentUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-brand-300 hover:text-brand-200 transition"
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      Lampiran
+                    </a>
+                  )}
                 </article>
               );
             })}

@@ -7,7 +7,6 @@ import Gallery from './public/Gallery';
 import Teachers from './public/Teachers';
 import Footer from './public/Footer';
 import PlaylistKelas from './public/PlaylistKelas';
-import MoodKreatif from './public/MoodKreatif';
 import ScrollProgress from './ScrollProgress';
 import { useReveal } from '../hooks/useReveal';
 
@@ -28,7 +27,6 @@ export default function PublicExperience({ onPortal, onHome }: { onPortal: () =>
         <Hero />
         <About />
         <Highlights />
-        <MoodKreatif />
         <PlaylistKelas />
         <Gallery />
         <Teachers />

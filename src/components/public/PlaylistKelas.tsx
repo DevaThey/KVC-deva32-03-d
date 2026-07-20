@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Music2, ExternalLink, Play, Pause, SkipBack, SkipForward, Clock, RefreshCw, ListMusic } from 'lucide-react';
+import { Music2, ExternalLink, Play, Pause, SkipBack, SkipForward, Clock, ListMusic } from 'lucide-react';
 import { useQuery } from '../../hooks/useQuery';
-import { fetchPlaylist } from '../../lib/queries';
+import { fetchPlaylist, fetchWebsiteSettings } from '../../lib/queries';
 import { useReveal } from '../../hooks/useReveal';
 import { LoadingState, ErrorState } from '../QueryState';
 import type { PlaylistTrack } from '../../lib/data';
@@ -18,13 +18,15 @@ const fmt = (sec: number) => {
 
 export default function PlaylistKelas() {
   useReveal();
-  const { data: playlist, loading, error, refetch } = useQuery(fetchPlaylist);
+  const { data: tracks, loading, error, refetch } = useQuery(fetchPlaylist);
+  const { data: settings } = useQuery(fetchWebsiteSettings);
+
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  const tracks = playlist?.tracks ?? [];
-  const track = tracks[currentIdx] as PlaylistTrack | undefined;
+  const list = tracks ?? [];
+  const track = list[currentIdx] as PlaylistTrack | undefined;
   const total = track ? toSec(track.duration) : 0;
 
   useEffect(() => {
@@ -37,8 +39,8 @@ export default function PlaylistKelas() {
 
   useEffect(() => setProgress(0), [currentIdx]);
 
-  const next = () => tracks.length > 0 && setCurrentIdx((i) => (i + 1) % tracks.length);
-  const prev = () => tracks.length > 0 && setCurrentIdx((i) => (i - 1 + tracks.length) % tracks.length);
+  const next = () => list.length > 0 && setCurrentIdx((i) => (i + 1) % list.length);
+  const prev = () => list.length > 0 && setCurrentIdx((i) => (i - 1 + list.length) % list.length);
 
   useEffect(() => {
     if (progress >= total && total > 0 && isPlaying) {
@@ -49,10 +51,8 @@ export default function PlaylistKelas() {
 
   const pct = useMemo(() => (total > 0 ? Math.min(100, (progress / total) * 100) : 0), [progress, total]);
 
-  const fmtDate = (iso: string) =>
-    iso ? new Date(iso + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-
   const bars = useMemo(() => Array.from({ length: 36 }, (_, i) => i), []);
+  const spotifyEmbedUrl = settings?.spotifyPlaylist ?? '';
 
   return (
     <section id="playlist" className="relative py-14 sm:py-20">
@@ -69,7 +69,7 @@ export default function PlaylistKelas() {
           <h2 className="section-title">Suara yang menemani studio.</h2>
           <p className="section-sub">
             Musik yang kami dengarkan saat mengerjakan tugas, brainstorm, dan
-            mengejar deadline. Diperbarui setiap minggu oleh kelas.
+            mengejar deadline.
           </p>
         </div>
 
@@ -77,9 +77,9 @@ export default function PlaylistKelas() {
           <LoadingState label="Memuat playlist" />
         ) : error ? (
           <ErrorState message={error} onRetry={refetch} />
-        ) : !playlist || tracks.length === 0 ? (
+        ) : list.length === 0 ? (
           <div className="reveal card-surface p-10 text-center text-ink-300">
-            Belum ada playlist yang dipublikasikan.
+            Belum ada lagu di playlist.
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
@@ -102,8 +102,8 @@ export default function PlaylistKelas() {
                     >
                       <div className="absolute inset-[22%] overflow-hidden rounded-full ring-2 ring-ink-950/60">
                         <img
-                          src={playlist.cover}
-                          alt={playlist.title}
+                          src={track?.coverImage || list[0]?.coverImage}
+                          alt={track?.title || 'Playlist'}
                           loading="lazy"
                           className="h-full w-full object-cover"
                         />
@@ -116,24 +116,12 @@ export default function PlaylistKelas() {
                   <div className="flex flex-1 flex-col">
                     <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-brand-300">
                       <ListMusic className="h-3.5 w-3.5" />
-                      {playlist.title}
+                      {list.length} lagu
                     </div>
                     <h3 className="mt-1.5 font-display text-2xl font-bold text-ink-50 leading-tight line-clamp-1">
                       {track?.title ?? '—'}
                     </h3>
                     <p className="text-sm text-ink-300">{track?.artist ?? '—'}</p>
-
-                    <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-ink-400">
-                      <span className="inline-flex items-center gap-1.5">
-                        <Music2 className="h-3.5 w-3.5" />
-                        {playlist.totalSongs} lagu
-                      </span>
-                      <span className="text-ink-600">·</span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <RefreshCw className="h-3.5 w-3.5" />
-                        Diperbarui {fmtDate(playlist.lastUpdated)}
-                      </span>
-                    </div>
 
                     {/* Transport controls */}
                     <div className="mt-5 flex items-center gap-3">
@@ -159,15 +147,17 @@ export default function PlaylistKelas() {
                         <SkipForward className="h-4 w-4" />
                       </button>
 
-                      <a
-                        href={playlist.openUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="ml-auto inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-2 text-xs font-semibold text-ink-100 hover:bg-white/10 hover:border-brand-400/30 transition-all duration-300 ease-smooth"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        Spotify
-                      </a>
+                      {spotifyEmbedUrl && (
+                        <a
+                          href={spotifyEmbedUrl.replace('/embed/', '/')}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="ml-auto inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-2 text-xs font-semibold text-ink-100 hover:bg-white/10 hover:border-brand-400/30 transition-all duration-300 ease-smooth"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          Spotify
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -219,12 +209,12 @@ export default function PlaylistKelas() {
                 <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
                   <h4 className="text-sm font-semibold text-ink-100">Daftar Lagu</h4>
                   <span className="text-[10px] uppercase tracking-wider text-ink-400">
-                    {tracks.length} ditampilkan
+                    {list.length} ditampilkan
                   </span>
                 </div>
 
                 <ul className="scroll-thin max-h-[24rem] overflow-y-auto divide-y divide-white/5">
-                  {tracks.map((t: PlaylistTrack, i: number) => {
+                  {list.map((t: PlaylistTrack, i: number) => {
                     const isCurrent = i === currentIdx;
                     return (
                       <li key={t.id}>

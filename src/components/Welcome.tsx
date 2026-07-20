@@ -1,9 +1,18 @@
 import { ArrowRight, LayoutDashboard } from 'lucide-react';
 import { scrollTo } from '../hooks/useReveal';
+import { useQuery } from '../hooks/useQuery';
+import { fetchWebsiteSettings, fetchClassInformation } from '../lib/queries';
 
 type Experience = 'public' | 'portal';
 
 export default function Welcome({ onEnter }: { onEnter: (e: Experience) => void }) {
+  const { data: settings } = useQuery(fetchWebsiteSettings);
+  const { data: info } = useQuery(fetchClassInformation);
+
+  const eyebrow = info ? `${info.className} · ${info.school}` : 'Kelas XI DKV 2 · SMK TI Bali Global Denpasar';
+  const title = settings?.welcomeTitle ?? 'Kavitwo Connect';
+  const subtitle = settings?.welcomeSubtitle ?? 'Rumah Digital Kelas XI DKV 2.';
+
   return (
     <div className="relative min-h-screen overflow-hidden flex items-center justify-center px-4 fade-in-soft">
       {/* Background */}
@@ -20,20 +29,20 @@ export default function Welcome({ onEnter }: { onEnter: (e: Experience) => void 
         {/* Eyebrow */}
         <div className="flex justify-center mb-8">
           <span className="chip border-brand-400/30 bg-brand-500/10 text-brand-200">
-            Kelas XI DKV 2 · SMK TI Bali Global Denpasar
+            {eyebrow}
           </span>
         </div>
 
         {/* Title */}
         <h1 className="font-display text-[clamp(3rem,9vw,7rem)] font-extrabold leading-[0.92] tracking-tight">
           <span className="bg-gradient-to-br from-cream-50 via-cream-200 to-brand-300 bg-clip-text text-transparent">
-            Kavitwo Connect
+            {title}
           </span>
         </h1>
 
         {/* Subtitle */}
         <p className="mx-auto mt-6 max-w-md text-lg sm:text-xl text-ink-200 leading-relaxed">
-          Rumah digital Kelas XI DKV 2.
+          {subtitle}
         </p>
 
         {/* Actions */}

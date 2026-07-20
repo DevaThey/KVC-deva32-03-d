@@ -22,7 +22,7 @@ const toMin = (t: string) => {
 
 export default function JadwalPelajaran() {
   const today = currentDayKey();
-  const [active, setActive] = useState<DayKey>(today ?? 'Mon');
+  const [active, setActive] = useState<DayKey>(today ?? 'Monday');
   const [now, setNow] = useState(() => new Date());
   useReveal();
   const { data, loading, error, refetch } = useQuery(fetchSchedule);
@@ -35,7 +35,7 @@ export default function JadwalPelajaran() {
   const allSlots = data ?? [];
 
   const slots = useMemo(
-    () => allSlots.filter((s) => s.day === active).sort((a, b) => a.start.localeCompare(b.start)),
+    () => allSlots.filter((s) => s.day === active && s.active).sort((a, b) => a.lessonOrder - b.lessonOrder),
     [allSlots, active]
   );
 
@@ -100,7 +100,7 @@ export default function JadwalPelajaran() {
                     </span>
                     {currentSlots.length > 0 ? (
                       currentSlots.map((slot) => {
-                        const c = subjectColorMap[slot.color];
+                        const c = subjectColorMap[slot.accentColor];
                         return (
                           <div key={slot.id} className="mt-2">
                             <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-50">{slot.subject}</h2>
@@ -199,7 +199,7 @@ export default function JadwalPelajaran() {
             ) : (
               <div className="reveal grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
                 {slots.map((slot, i) => {
-                  const c = subjectColorMap[slot.color];
+                  const c = subjectColorMap[slot.accentColor];
                   const slotNow = isNow(slot);
                   return (
                     <div

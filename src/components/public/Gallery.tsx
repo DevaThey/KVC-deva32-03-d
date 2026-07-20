@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import { useQuery } from '../../hooks/useQuery';
 import { fetchGallery } from '../../lib/queries';
+import { galleryCategories } from '../../lib/data';
 import { useReveal } from '../../hooks/useReveal';
 import { LoadingState, ErrorState } from '../QueryState';
-import type { GalleryItem } from '../../lib/data';
 
 export default function Gallery() {
   const [active, setActive] = useState<number | null>(null);
@@ -12,8 +12,7 @@ export default function Gallery() {
   useReveal();
   const { data, loading, error, refetch } = useQuery(fetchGallery);
 
-  const items = data?.items ?? [];
-  const categories = data?.categories ?? [];
+  const items = data ?? [];
 
   const list = useMemo(() => {
     if (filter === 'Semua') return items;
@@ -30,9 +29,6 @@ export default function Gallery() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [active, list.length]);
-
-  const spanClass = (s: GalleryItem['span']) =>
-    s === 'tall' ? 'row-span-2' : s === 'wide' ? 'sm:col-span-2' : '';
 
   const isSemua = filter === 'Semua';
 
@@ -63,7 +59,7 @@ export default function Gallery() {
           <>
             {/* Filters */}
             <div className="reveal flex flex-wrap gap-2 mb-8">
-              {['Semua', ...categories].map((c) => {
+              {['Semua', ...galleryCategories].map((c) => {
                 const isActive = filter === c;
                 return (
                   <button
@@ -92,10 +88,12 @@ export default function Gallery() {
                     key={item.id}
                     onClick={() => setActive(i)}
                     data-reveal-delay={(i % 4) * 60}
-                    className={`reveal group relative overflow-hidden rounded-3xl border border-white/5 bg-ink-800/60 ${spanClass(item.span)}`}
+                    className={`reveal group relative overflow-hidden rounded-3xl border border-white/5 bg-ink-800/60 ${
+                      item.featured ? 'row-span-2 sm:col-span-2' : ''
+                    }`}
                   >
                     <img
-                      src={item.src}
+                      src={item.image}
                       alt={item.title}
                       loading="lazy"
                       className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
@@ -123,7 +121,7 @@ export default function Gallery() {
                     className="reveal group relative overflow-hidden rounded-3xl border border-white/5 bg-ink-800/60 aspect-[4/3]"
                   >
                     <img
-                      src={item.src}
+                      src={item.image}
                       alt={item.title}
                       loading="lazy"
                       className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
@@ -182,7 +180,7 @@ export default function Gallery() {
 
           <figure className="relative max-w-4xl w-full animate-fade-up" onClick={(e) => e.stopPropagation()}>
             <img
-              src={list[active].src}
+              src={list[active].image}
               alt={list[active].title}
               className="w-full max-h-[78vh] object-contain rounded-3xl shadow-card"
             />
@@ -190,6 +188,9 @@ export default function Gallery() {
               <div>
                 <div className="text-[10px] uppercase tracking-wider text-brand-300">{list[active].category}</div>
                 <div className="font-medium text-ink-50">{list[active].title}</div>
+                {list[active].description && (
+                  <div className="mt-1 text-xs text-ink-400 max-w-md">{list[active].description}</div>
+                )}
               </div>
               <span className="text-xs text-ink-400 tabular-nums">
                 {active + 1} / {list.length}
