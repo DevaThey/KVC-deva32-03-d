@@ -22,13 +22,17 @@ function Gallery() {
 
   useEffect(() => {
     if (active === null) return;
+    document.body.style.overflow = 'hidden';
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setActive(null);
       if (e.key === 'ArrowRight') setActive((i) => (i === null ? i : (i + 1) % list.length));
       if (e.key === 'ArrowLeft') setActive((i) => (i === null ? i : (i - 1 + list.length) % list.length));
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
   }, [active, list.length]);
 
   const isSemua = filter === 'Semua';
@@ -183,7 +187,7 @@ function Gallery() {
             <ChevronRight className="h-5 w-5" />
           </button>
 
-          <figure className="relative max-w-4xl w-full animate-fade-up" onClick={(e) => e.stopPropagation()}>
+          <figure className="relative max-w-4xl w-full animate-fade-scale" onClick={(e) => e.stopPropagation()}>
             <img
               src={list[active].image}
               alt={list[active].title}

@@ -1,5 +1,5 @@
-import { memo } from 'react';
-import { ArrowUpRight } from 'lucide-react';
+import { memo, useState, useEffect } from 'react';
+import { ArrowUpRight, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useQuery } from '../../hooks/useQuery';
 import { fetchHighlights } from '../../lib/queries';
 import { useReveal } from '../../hooks/useReveal';
@@ -8,8 +8,24 @@ import { LoadingState, ErrorState } from '../QueryState';
 function Highlights() {
   useReveal();
   const { data, loading, error, refetch } = useQuery(fetchHighlights);
+  const [active, setActive] = useState<number | null>(null);
 
   const items = data ?? [];
+
+  useEffect(() => {
+    if (active === null) return;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActive(null);
+      if (e.key === 'ArrowRight') setActive((i) => (i === null ? i : (i + 1) % items.length));
+      if (e.key === 'ArrowLeft') setActive((i) => (i === null ? i : (i - 1 + items.length) % items.length));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [active, items.length]);
 
   return (
     <section id="highlights" className="reveal cv-auto relative py-14 sm:py-20">
@@ -40,7 +56,8 @@ function Highlights() {
               <article
                 key={h.id}
                 data-reveal-delay={i * 80}
-                className="reveal group card-surface relative overflow-hidden flex flex-col transition-all duration-500 ease-smooth hover:-translate-y-1 hover:border-brand-400/30 hover:shadow-card"
+                onClick={() => setActive(i)}
+                className="reveal group card-surface relative overflow-hidden flex flex-col cursor-pointer transition-transform duration-500 ease-smooth hover:-translate-y-1 hover:border-brand-400/30 hover:shadow-card"
               >
                 <div className="relative h-56 overflow-hidden">
                   <img
@@ -74,7 +91,69 @@ function Highlights() {
             ))}
           </div>
         )}
+
       </div>
+
+      {/* Image preview modal */}
+      {active !== null && items[active] && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-8 animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setActive(null)}
+        >
+          <div className="absolute inset-0 bg-ink-950/85 backdrop-blur-xl" />
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setActive((i) => (i === null ? i : (i - 1 + items.length) % items.length));
+            }}
+            className="absolute left-3 sm:left-6 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-md text-ink-50 hover:bg-white/20 transition"
+            aria-label="Sebelumnya"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setActive((i) => (i === null ? i : (i + 1) % items.length));
+            }}
+            className="absolute right-3 sm:right-6 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-md text-ink-50 hover:bg-white/20 transition"
+            aria-label="Berikutnya"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+
+          <figure
+            className="relative max-w-3xl w-full animate-fade-scale"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={items[active].image}
+              alt={items[active].title}
+              loading="eager"
+              decoding="async"
+              className="w-full max-h-[72vh] object-contain rounded-3xl shadow-card"
+            />
+            <figcaption className="mt-4 text-center">
+              {items[active].subtitle && (
+                <div className="text-[10px] uppercase tracking-wider text-brand-300">{items[active].subtitle}</div>
+              )}
+              <div className="font-display text-lg font-semibold text-ink-50">{items[active].title}</div>
+              <p className="mt-1 text-sm text-ink-300 max-w-lg mx-auto">{items[active].description}</p>
+            </figcaption>
+          </figure>
+
+          <button
+            onClick={() => setActive(null)}
+            className="absolute top-5 right-5 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur-md text-ink-50 hover:bg-white/20 transition"
+            aria-label="Tutup"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      )}
     </section>
   );
 }
